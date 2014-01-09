@@ -79,7 +79,7 @@ public class RobotPlayer{
 	}
 	
 	private static MapLocation mldivide(MapLocation bigM, int divisor){
-		return new MapLocation(bigM.x/divisor, bigM.y/divisor);
+		return new MapLocation(bigM.x/(divisor+1), bigM.y/(divisor+1));
 	}
 
 	private static int locToInt(MapLocation m){
