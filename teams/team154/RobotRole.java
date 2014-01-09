@@ -1,4 +1,4 @@
-package team154;
+package testRobot;
 
 /**
  * This class contains the information for the different roles
