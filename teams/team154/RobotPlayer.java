@@ -1,13 +1,13 @@
-package testRobot;
+package team154;
 
 import battlecode.common.*;
 
 import java.util.ArrayList;
 import java.util.Random;
 
-import testRobot.BasicPathing;
-import testRobot.BreadthFirst;
-import testRobot.VectorFunctions;
+import team154.BasicPathing;
+import team154.BreadthFirst;
+import team154.VectorFunctions;
 
 public class RobotPlayer{
     
@@ -80,26 +80,26 @@ public class RobotPlayer{
 //        swarmMove(height, width);
     }
     
-    private static void swarmMove(int height, int width) throws GameActionException{
-        Direction chosenDirection = rc.getLocation().directionTo(rc.senseEnemyHQLocation());
-        if(rc.isActive()){
-            if(randall.nextDouble()<0.5){//go to swarm center
-                for(int directionalOffset:directionalLooks){
-                    int forwardInt = chosenDirection.ordinal();
-                    Direction trialDir = allDirections[(forwardInt+directionalOffset+8)%8];
-                    if(rc.canMove(trialDir)){
-                        rc.move(trialDir);
-                        break;
-                    }
-                }
-            }else{//go wherever the wind takes you
-                Direction d = allDirections[(int)(randall.nextDouble()*8)];
-                if(rc.isActive()&&rc.canMove(d)){
-                    rc.move(d);
-                }
-            }
-        }
-    }
+//    private static void swarmMove(int height, int width) throws GameActionException{
+//        Direction chosenDirection = rc.getLocation().directionTo(rc.senseEnemyHQLocation());
+//        if(rc.isActive()){
+//            if(randall.nextDouble()<0.5){//go to swarm center
+//                for(int directionalOffset:directionalLooks){
+//                    int forwardInt = chosenDirection.ordinal();
+//                    Direction trialDir = allDirections[(forwardInt+directionalOffset+8)%8];
+//                    if(rc.canMove(trialDir)){
+//                        rc.move(trialDir);
+//                        break;
+//                    }
+//                }
+//            }else{//go wherever the wind takes you
+//                Direction d = allDirections[(int)(randall.nextDouble()*8)];
+//                if(rc.isActive()&&rc.canMove(d)){
+//                    rc.move(d);
+//                }
+//            }
+//        }
+//    }
     
     private static MapLocation mladd(MapLocation m1, MapLocation m2){
         return new MapLocation(m1.x+m2.x,m1.y+m2.y);
