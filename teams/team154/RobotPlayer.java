@@ -14,7 +14,7 @@ public class RobotPlayer{
     public static RobotController rc;
     static Direction allDirections[] = Direction.values();
     static Random randall = new Random();
-    static int directionalLooks[] = new int[]{0,1,-1,2,-2};
+    static int directionalLooks[] = new int[]{0,1,-1,2,-2,3,-3,4};
     static boolean mapCreated = false;
 	static ArrayList<MapLocation> path;
 	static int bigBoxSize = 5;
@@ -31,19 +31,23 @@ public class RobotPlayer{
         randall.setSeed(rc.getRobot().getID());
         int height = rc.getMapHeight();
         int width = rc.getMapWidth();
+		if(rc.getType()==RobotType.HQ){
+		}else{
+			BreadthFirst.init(rc, bigBoxSize);
+			MapLocation goal = rc.senseEnemyHQLocation();
+			path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(goal,bigBoxSize), 100000);
+			//VectorFunctions.printPath(path,bigBoxSize);
+		}
         while(true){
             try{
                 if(rc.getType()==RobotType.HQ){//if I'm a headquarters
                     runHeadquarters(height,width);
                 }else if(rc.getType()==RobotType.SOLDIER){
-        			BreadthFirst.init(rc, bigBoxSize);
-        			MapLocation goal = rc.senseEnemyHQLocation();
-        			path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(goal,bigBoxSize), 100000);
                     runSoldier(height, width);
                 }
                 rc.yield();
             }catch (Exception e){
-                e.printStackTrace();
+//                e.printStackTrace();
             }
         }
     }
@@ -60,9 +64,79 @@ public class RobotPlayer{
 				}	
 			}
 		}
-        tryToShoot();
+
+        Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent());
+        boolean HQdetected = false;
+        if(enemyRobots.length>0){//if there are enemies
+			rc.setIndicatorString(0, "There are enemies");
+        	int locationSize = enemyRobots.length;
+			for(int i=0;i<enemyRobots.length;i++){
+				Robot anEnemy = enemyRobots[i];
+				RobotInfo anEnemyInfo = rc.senseRobotInfo(anEnemy);
+				if(anEnemyInfo.type == RobotType.HQ){
+					HQdetected = true;
+				}
+			}
+			if(locationSize != 1 || HQdetected == false){
+				MapLocation[] robotLocations = new MapLocation[locationSize];
+				for(int i=0;i<locationSize;i++){
+					Robot anEnemy = enemyRobots[i];
+					RobotInfo anEnemyInfo = rc.senseRobotInfo(anEnemy);
+					if(anEnemyInfo.type != RobotType.HQ){
+						robotLocations[i] = anEnemyInfo.location;
+					}
+					else{
+						robotLocations[i] = new MapLocation(10000,10000);
+					}
+				}
+				System.out.println(robotLocations[0]);
+				MapLocation closestEnemyLoc = VectorFunctions.findClosest(robotLocations, rc.getLocation());
+
+				if(closestEnemyLoc.distanceSquaredTo(rc.getLocation())<rc.getType().attackRadiusMaxSquared){
+					rc.setIndicatorString(1, "trying to shoot");
+					if(rc.isActive()){
+						rc.attackSquare(closestEnemyLoc);
+					}
+				}else{
+					rc.setIndicatorString(1, "trying to go closer");
+					Direction towardClosest = rc.getLocation().directionTo(closestEnemyLoc);
+					simpleMove(towardClosest);
+				}
+			}
+			else if(locationSize == 1 && HQdetected == true){
+				Direction chosenDirection = allDirections[(int)(randall.nextDouble()*8)];
+				if(rc.isActive()&&rc.canMove(chosenDirection)){
+					rc.move(chosenDirection);
+				}
+			}
+			else{
+				if(path.size()==0){
+					path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(rc.senseEnemyHQLocation(),bigBoxSize), 100000);
+				}
+				//follow breadthFirst path
+				Direction bdir = BreadthFirst.getNextDirection(path, bigBoxSize);
+				BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
+
+			}
+        }else{
+			if(path.size()==0){
+				path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(rc.senseEnemyHQLocation(),bigBoxSize), 100000);
+			}
+			//follow breadthFirst path
+			Direction bdir = BreadthFirst.getNextDirection(path, bigBoxSize);
+			BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
+		}
+//there are no enemies, so build a tower
+//            if(randall.nextDouble()<1 && rc.sensePastrLocations(rc.getTeam()).length<10){
+//                if (senseCowsAtRange(rc.getLocation()) > 2500){
+//                    if(rc.isActive()){
+//                        rc.construct(RobotType.PASTR);
+//                    }
+//                }
+//            }
+
         //movement
-        Direction chosenDirection = allDirections[(int)(randall.nextDouble()*8)];
+//        Direction chosenDirection = allDirections[(int)(randall.nextDouble()*8)];
 //        if(rc.isActive()&&rc.canMove(chosenDirection)){
 //            Robot[] nearbyRobots = rc.senseNearbyGameObjects(Robot.class, 5);
 //            RobotInfo x;
@@ -74,31 +148,29 @@ public class RobotPlayer{
 //            }
 //            rc.move(chosenDirection);
 //        }
-		Direction bdir = BreadthFirst.getNextDirection(path, bigBoxSize);
-		BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
 //        swarmMove(height, width);
     }
     
-//    private static void swarmMove(int height, int width) throws GameActionException{
-//        Direction chosenDirection = rc.getLocation().directionTo(rc.senseEnemyHQLocation());
-//        if(rc.isActive()){
-//            if(randall.nextDouble()<0.5){//go to swarm center
-//                for(int directionalOffset:directionalLooks){
-//                    int forwardInt = chosenDirection.ordinal();
-//                    Direction trialDir = allDirections[(forwardInt+directionalOffset+8)%8];
-//                    if(rc.canMove(trialDir)){
-//                        rc.move(trialDir);
-//                        break;
-//                    }
-//                }
-//            }else{//go wherever the wind takes you
-//                Direction d = allDirections[(int)(randall.nextDouble()*8)];
-//                if(rc.isActive()&&rc.canMove(d)){
-//                    rc.move(d);
-//                }
-//            }
-//        }
-//    }
+    private static void swarmMove(int height, int width) throws GameActionException{
+        Direction chosenDirection = rc.getLocation().directionTo(rc.senseEnemyHQLocation());
+        if(rc.isActive()){
+            if(randall.nextDouble()<0.5){//go to swarm center
+                for(int directionalOffset:directionalLooks){
+                    int forwardInt = chosenDirection.ordinal();
+                    Direction trialDir = allDirections[(forwardInt+directionalOffset+8)%8];
+                    if(rc.canMove(trialDir)){
+                        rc.move(trialDir);
+                        break;
+                    }
+                }
+            }else{//go wherever the wind takes you
+                Direction d = allDirections[(int)(randall.nextDouble()*8)];
+                if(rc.isActive()&&rc.canMove(d)){
+                    rc.move(d);
+                }
+            }
+        }
+    }
     
     private static MapLocation mladd(MapLocation m1, MapLocation m2){
         return new MapLocation(m1.x+m2.x,m1.y+m2.y);
@@ -125,40 +197,17 @@ public class RobotPlayer{
         return cows;
     }
 
-    private static void tryToShoot() throws GameActionException {
-        //shooting
-        Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent());
-        if(enemyRobots.length>0){//if there are enemies
-            Robot anEnemy = enemyRobots[0];
-            RobotInfo anEnemyInfo;
-            anEnemyInfo = rc.senseRobotInfo(anEnemy);
-            if(anEnemyInfo.type == RobotType.HQ && enemyRobots.length>1){
-                anEnemy = enemyRobots[1];
-                anEnemyInfo = rc.senseRobotInfo(anEnemy);
-                if(anEnemyInfo.location.distanceSquaredTo(rc.getLocation())<rc.getType().attackRadiusMaxSquared){
-                    if(rc.isActive()){
-                        rc.attackSquare(anEnemyInfo.location);
-                    }
-                }
-            }
-            else if(anEnemyInfo.type != RobotType.HQ){
-                if(anEnemyInfo.location.distanceSquaredTo(rc.getLocation())<rc.getType().attackRadiusMaxSquared){
-                    if(rc.isActive()){
-                        rc.attackSquare(anEnemyInfo.location);
-                    }
-                }
-            }
-        }else{//there are no enemies, so build a tower
-            if(randall.nextDouble()<1 && rc.sensePastrLocations(rc.getTeam()).length<10){
-                if (senseCowsAtRange(rc.getLocation()) > 2500){
-                    if(rc.isActive()){
-                        rc.construct(RobotType.PASTR);
-//                        System.out.println((senseCowsAtRange(rc.getLocation())));
-                    }
-                }
-            }
-        }
-    }
+    
+	private static void simpleMove(Direction chosenDirection) throws GameActionException{
+		for(int directionalOffset:directionalLooks){
+			int forwardInt = chosenDirection.ordinal();
+			Direction trialDir = allDirections[(forwardInt+directionalOffset+8)%8];
+			if(rc.canMove(trialDir)){
+				rc.move(trialDir);
+				break;
+			}
+		}
+	}
 
     
     private static void runHeadquarters(int height, int width) throws GameActionException {

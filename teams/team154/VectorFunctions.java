@@ -7,7 +7,7 @@ import battlecode.common.MapLocation;
 public class VectorFunctions {
 	public static MapLocation findClosest(MapLocation[] manyLocs, MapLocation point){
 		int closestDist = 10000000;
-		int challengerDist = closestDist;
+		int challengerDist;
 		MapLocation closestLoc = null;
 		for(MapLocation m:manyLocs){
 			challengerDist = point.distanceSquaredTo(m);
