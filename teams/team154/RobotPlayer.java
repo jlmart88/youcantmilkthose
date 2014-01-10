@@ -24,7 +24,6 @@ public class RobotPlayer{
 	static int currentRoleChannel = 0;
 	static int lastSpawnedID = 0;
 	static boolean justSpawned = false;
-
     
     public static void run(RobotController rcin){
         rc = rcin;
@@ -89,7 +88,7 @@ public class RobotPlayer{
 						robotLocations[i] = new MapLocation(10000,10000);
 					}
 				}
-				System.out.println(robotLocations[0]);
+				//System.out.println(robotLocations[0]);
 				MapLocation closestEnemyLoc = VectorFunctions.findClosest(robotLocations, rc.getLocation());
 
 				if(closestEnemyLoc.distanceSquaredTo(rc.getLocation())<rc.getType().attackRadiusMaxSquared){
@@ -269,7 +268,14 @@ public class RobotPlayer{
                 System.out.println();
             }
             mapCreated = true;
+            
+            MapLocation[] idealPastrLocations = MapAnalyzer.findIdealPastrLocations(map,rc.senseCowGrowth(),rc.getLocation());
+            System.out.println("I'm here");
+            MapAnalyzer.printIdealPastrLocations(map,idealPastrLocations);
         }
+        
+        
+        
 //        int editingChannel = (Clock.getRoundNum()%2);
 //        int usingChannel = ((Clock.getRoundNum()+1)%2);
 //        rc.broadcast(editingChannel, 0);

@@ -1,29 +1,22 @@
 package team154;
 
-import java.awt.Point;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import battlecode.common.*;
 
 public class MapAnalyzer {
 	
-	public final char terrainMap[][];
-	public final double cowGrowthMap[][];
-	public final MapLocation hqLocation;
 	public static final char NORMAL_TILE = '-';
 	public static final char VOID_TILE = '#';
 	public static final char OFF_MAP_TILE = '^';
 	public static final char ROAD_TILE = '=';
 	public static final int NUM_IDEAL_PASTRS = 5;
-	
-	public MapAnalyzer(char[][] terrainMap, double[][] cowGrowthMap, MapLocation hqLocation) {
-		this.terrainMap = terrainMap;
-		this.cowGrowthMap = cowGrowthMap;
-		this.hqLocation = hqLocation;
-	}
 	
 	/** Returns NUM_IDEAL_PASTRS number of locations where building a pastr is ideal
 	 * 
@@ -35,29 +28,34 @@ public class MapAnalyzer {
 	 *
 	 * @return MapLocation[] array of MapLocations to build a pastr
 	 */
-	public MapLocation[] findIdealPastrLocations(){
-		MapLocation optimalLocations[] = new MapLocation[NUM_IDEAL_PASTRS];
+	public static MapLocation[] findIdealPastrLocations(char[][] terrainMap, double[][] cowGrowthMap, MapLocation hqLocation){
+		MapLocation idealLocations[] = new MapLocation[NUM_IDEAL_PASTRS];
 		HashMap<Integer, MapLocation> rankedMap = 
 				new HashMap<Integer,MapLocation>(); //create space for a map where
 													//each location has a rank (value)
 		
-		int rowNum = -1;
-		for (char[] row:terrainMap){
-			rowNum++;
-			int colNum = -1;
-			for (char tile:row){
-				colNum++;
-				if (tile==NORMAL_TILE||tile==ROAD_TILE){
+		for (int rowNum=0; rowNum<terrainMap.length; rowNum++){
+			for (int colNum=0; colNum<terrainMap[0].length; colNum++){
+				
+				if (terrainMap[rowNum][colNum]==NORMAL_TILE||terrainMap[rowNum][colNum]==ROAD_TILE){
 					
 					//determine the number of ways to get to the location in a single move
-					Point[] possibleEntryways = neighborLocations(new Point(rowNum,colNum),1);
+					MapLocation[] possibleEntryways = MapLocation.getAllMapLocationsWithinRadiusSq(new MapLocation(rowNum,colNum), 2);
+					
 					int numEntryways = 0;
-					for (Point possibleEntryway:possibleEntryways){
-						char terrain = terrainMap[possibleEntryway.y][possibleEntryway.x];
-						if (terrain==NORMAL_TILE||terrain==ROAD_TILE){
-							numEntryways++;
+					for (MapLocation possibleEntryway:possibleEntryways){
+						
+						
+						if(possibleEntryway.x>=0 && possibleEntryway.y>=0 && 
+								possibleEntryway.x<terrainMap[0].length && possibleEntryway.y<terrainMap.length){
+							char terrain = terrainMap[possibleEntryway.y][possibleEntryway.x];
+								if ((terrain==NORMAL_TILE||terrain==ROAD_TILE)&&!(possibleEntryway.x==colNum&&possibleEntryway.y==rowNum)){
+									numEntryways++;
+									}
 						}
+						
 					}
+					
 					
 					//determine the cow growth rate at the location
 					double cowGrowthRate = cowGrowthMap[rowNum][colNum];
@@ -70,20 +68,25 @@ public class MapAnalyzer {
 							MapLocation.getAllMapLocationsWithinRadiusSq(
 									new MapLocation(rowNum, colNum),RobotType.SOLDIER.attackRadiusMaxSquared);
 					int numAttackLocations = 0;
+					
 					for (MapLocation location: locationsInAttackRange){
-						char terrain = terrainMap[location.y][location.x];
-						if (terrain==NORMAL_TILE||terrain==ROAD_TILE){
-							numAttackLocations++;
+						if(location.x>=0 && location.y>=0 && 
+								location.x<terrainMap[0].length && location.y<terrainMap.length){
+							char terrain = terrainMap[location.y][location.x];
+							if (terrain==NORMAL_TILE||terrain==ROAD_TILE){
+								numAttackLocations++;
+							}
 						}
+						
 					}
 					
 					//weight these factors into a ranking:
 					int entrywayWeight = 10000;
-					int cowGrowthWeight = 2000;
-					int proximityWeight = 10000;
+					int cowGrowthWeight = 1500;
+					int proximityWeight = 1000;
 					int attackWeight = 10000;
 					
-					rankedMap.put((int) ((int)
+					rankedMap.put((int) (
 							entrywayWeight/(numEntryways+1)+
 							cowGrowthWeight*cowGrowthRate+
 							proximityWeight/(proximityToHQ+1)+
@@ -98,21 +101,28 @@ public class MapAnalyzer {
 		}
 		
 		//find the top pastr locations
-		List<Integer> rankings = (List<Integer>) rankedMap.keySet();
-		Collections.sort(rankings);
+		List<Integer> rankings =  new ArrayList<Integer>(rankedMap.keySet());
+		Collections.sort(rankings, new Comparator<Integer>() {
+			@Override public int compare(Integer one, Integer two) {
+				return two.compareTo(one);
+			}
+		});
+		
 		for (int i=0; i<NUM_IDEAL_PASTRS; i++){
 			int bestRanking = rankings.get(i);
-			optimalLocations[i]=rankedMap.get(bestRanking);
+			MapLocation bestLocation = rankedMap.get(bestRanking);
+			System.out.println("BEST RANKING: "+bestRanking+ " LOCATION: "+bestLocation);
+			idealLocations[i]=bestLocation;
 		}
 		
-		return optimalLocations;
+		return idealLocations;
 		
 		
 	}
 	
 	/**
 	 * Returns the locations surrounding center in a square
-	 * as Points
+	 * as MapLocations
 	 * 
 	 * 
 	 * Ex: distanceAway=1 returns the following x points:
@@ -129,18 +139,18 @@ public class MapAnalyzer {
 	 * x x x x x 
 	 * x x x x x 
 	 * 
-	 * @param center Point representing the center of the square
+	 * @param center MapLocation representing the center of the square
 	 * @param distanceAway int representing the distance within to return points
-	 * @return Point[]
+	 * @return MapLocation[]
 	 */
-	private Point[] neighborLocations(Point center, int distanceAway){
+	private static MapLocation[] neighborLocations(MapLocation center, int distanceAway){
 		int numOfNeighbors = (((distanceAway*2)+1)*((distanceAway*2)+1))-1;
-		Point out[] = new Point[numOfNeighbors];
+		MapLocation out[] = new MapLocation[numOfNeighbors];
 		int index=0;
 		for (int i=-distanceAway; i<=distanceAway; i++){
 			for (int j=-distanceAway; j<=distanceAway; j++) {
 				if (i!=0&&j!=0){
-					out[index] = new Point(center.x+i,center.y+j);
+					out[index] = new MapLocation(center.x+i,center.y+j);
 				}
 			}
 		}
@@ -148,5 +158,20 @@ public class MapAnalyzer {
 		
 	}
 	
+	public static void printIdealPastrLocations(char[][] terrainMap, MapLocation[] idealLocations) {
+		System.out.println("***********PASTR LOCATIONS************");
+		ArrayList<MapLocation> idealLocationsArray = new ArrayList<MapLocation>(Arrays.asList(idealLocations));
+		for(int y=0; y<terrainMap.length; y++){
+            for(int x=0; x<terrainMap[0].length; x++){
+            	if (idealLocationsArray.contains(new MapLocation(x,y))){
+            		System.out.print("X");
+            	}
+            	else{
+            		System.out.print(terrainMap[y][x]);
+            	}
+            }
+            System.out.println();
+		}
+	}
 
 }
