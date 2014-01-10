@@ -40,7 +40,7 @@ public class MapAnalyzer {
 				if (terrainMap[rowNum][colNum]==NORMAL_TILE||terrainMap[rowNum][colNum]==ROAD_TILE){
 					
 					//determine the number of ways to get to the location in a single move
-					MapLocation[] possibleEntryways = MapLocation.getAllMapLocationsWithinRadiusSq(new MapLocation(rowNum,colNum), 2);
+					MapLocation[] possibleEntryways = MapLocation.getAllMapLocationsWithinRadiusSq(new MapLocation(colNum,rowNum), 2);
 					
 					int numEntryways = 0;
 					for (MapLocation possibleEntryway:possibleEntryways){
@@ -61,12 +61,12 @@ public class MapAnalyzer {
 					double cowGrowthRate = cowGrowthMap[rowNum][colNum];
 					
 					//determine the distance to the HQ
-					int proximityToHQ = hqLocation.distanceSquaredTo(new MapLocation(rowNum,colNum));
+					int proximityToHQ = hqLocation.distanceSquaredTo(new MapLocation(colNum,rowNum));
 					
 					//determine the number of locations from which the location can be attacked
 					MapLocation[] locationsInAttackRange = 
 							MapLocation.getAllMapLocationsWithinRadiusSq(
-									new MapLocation(rowNum, colNum),RobotType.SOLDIER.attackRadiusMaxSquared);
+									new MapLocation(colNum,rowNum),RobotType.SOLDIER.attackRadiusMaxSquared);
 					int numAttackLocations = 0;
 					
 					for (MapLocation location: locationsInAttackRange){
@@ -91,7 +91,7 @@ public class MapAnalyzer {
 							cowGrowthWeight*cowGrowthRate+
 							proximityWeight/(proximityToHQ+1)+
 							attackWeight/(numAttackLocations+1)),
-							new MapLocation(rowNum,colNum));
+							new MapLocation(colNum,rowNum));
 					
 						
 				}else{
