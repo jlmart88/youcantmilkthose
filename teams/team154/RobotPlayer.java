@@ -60,7 +60,6 @@ public class RobotPlayer{
 				}	
 			}
 		}
-
         tryToShoot();
         //movement
         Direction chosenDirection = allDirections[(int)(randall.nextDouble()*8)];
@@ -197,7 +196,7 @@ public class RobotPlayer{
 				}
 			}
 		}
-        char[][] map = new char[width][height];
+        char[][] map = new char[height][width];
         if(rc.isActive()&&rc.canMove(spawnDir)&&rc.senseRobotCount()<GameConstants.MAX_ROBOTS){
             rc.spawn(Direction.NORTH);
         }
@@ -205,18 +204,18 @@ public class RobotPlayer{
             for(int y=0; y<height; y++){
                 for(int x=0; x<width; x++){
                     if(rc.senseTerrainTile(new MapLocation(x,y)) == TerrainTile.NORMAL){
-                        map[x][y] = '-';
+                        map[y][x] = '-';
                     }
                     else if(rc.senseTerrainTile(new MapLocation(x,y)) == TerrainTile.VOID){
-                        map[x][y] = '#';
+                        map[y][x] = '#';
                     }
                     else if(rc.senseTerrainTile(new MapLocation(x,y)) == TerrainTile.OFF_MAP){
-                        map[x][y] = '^';
+                        map[y][x] = '^';
                     }
                     else if(rc.senseTerrainTile(new MapLocation(x,y)) == TerrainTile.ROAD){
-                        map[x][y] = '=';
+                        map[y][x] = '=';
                     }
-                    System.out.print(map[x][y]);
+                    System.out.print(map[y][x]);
                 }
                 System.out.println();
             }
