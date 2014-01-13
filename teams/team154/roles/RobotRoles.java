@@ -1,4 +1,4 @@
-package team154;
+package team154.roles;
 
 /**
  * This class contains the information for the different roles
@@ -9,15 +9,15 @@ package team154;
  * @author jlmart88
  *
  */
-public enum RobotRole {
+public enum RobotRoles {
 
-	     // COMM_ID
-SCOUT       (0),
-CONSTRUCTOR (1),
-COWBOY      (2),
-SOLDIER     (3),
-DEFENDER    (4),
-HQ          (5),
+	     // COMM_ID   IDEAL_NUM
+SCOUT       (0, 	  0),
+CONSTRUCTOR (1, 	  4),
+COWBOY      (2, 	  4),
+SOLDIER     (3, 	  12),
+DEFENDER    (4, 	  0),
+HQ          (5, 	  1),
 
 ;
 
@@ -25,10 +25,14 @@ HQ          (5),
 * The ID to use in broadcasting
 */
 public final int communicationID;
+public final int idealNum;
 
-RobotRole(int communicationID) {
+RobotRoles(int communicationID, int idealNum) {
   this.communicationID = communicationID;
+  this.idealNum = idealNum;
 }
+
+
 
 }
 

@@ -1,4 +1,4 @@
-package team154;
+package team154.movement;
 
 import java.util.ArrayList;
 

@@ -1,5 +1,7 @@
 package team154;
 
+import team154.roles.RobotRoles;
+
 /**
  * This class provides the definitions for how robots will broadcast and read to the
  * global channels
@@ -26,22 +28,22 @@ public class CommunicationProtocol {
 	/** Takes in the data stored in a channel and returns what role the channel data is displaying
 	 * 
 	 * If the channelData is not properly formatted for displaying a role, it will default to returning
-	 * RobotRole.CONSTRUCTOR
+	 * RobotRoles.CONSTRUCTOR
 	 * 
 	 * @param channelData the integer stored in the data
-	 * @return RobotRole the role the channel is displaying
+	 * @return RobotRoles the role the channel is displaying
 	 */
-	public static RobotRole dataToRole(int channelData){
+	public static RobotRoles dataToRole(int channelData){
 		//take the last digit of the data, since roles are only one digit
 		int communicationID = channelData%10;
-		for (RobotRole role: RobotRole.values()){
+		for (RobotRoles role: RobotRoles.values()){
 			if (role.communicationID == communicationID){
 				return role;
 			}
 		}
 		// if we get here, then the channel data was improperly formatted,
 		// so default to returning the Constructor role
-		return RobotRole.CONSTRUCTOR;
+		return RobotRoles.CONSTRUCTOR;
 	}
 	
 	/** Takes in the data stored in a channel and returns what robotID the channel data is displaying
@@ -52,7 +54,7 @@ public class CommunicationProtocol {
 	 * BYTECODE COST: 20
 	 * 
 	 * @param channelData the integer stored in the data
-	 * @return RobotRole the role the channel is displaying
+	 * @return RobotRoles the role the channel is displaying
 	 */
 	public static int dataToRobotID(int channelData){
 		String dataString = Integer.toString(channelData);
@@ -69,10 +71,10 @@ public class CommunicationProtocol {
 	 * 
 	 * 
 	 * @param robotID integer of the robot's id
-	 * @param role RobotRole the robot should have
+	 * @param role RobotRoles the robot should have
 	 * @return int the channel data to broadcast
 	 */
-	public static int roleToData(int robotID, RobotRole role){
+	public static int roleToData(int robotID, RobotRoles role){
 		return Integer.parseInt(Integer.toString(robotID)+
 				Integer.toString(DEFAULT_SPACER)+Integer.toString(role.communicationID));	
 	}

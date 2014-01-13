@@ -61,6 +61,7 @@ public class MapAnalyzer {
 					
 					//determine the number of locations from which the location can be attacked
 					//determine the number of ways to get to the location in a single move
+					/*
 					MapLocation[] locationsInAttackRange = 
 							MapLocation.getAllMapLocationsWithinRadiusSq(
 									thisMapLocation,RobotType.SOLDIER.attackRadiusMaxSquared);
@@ -80,6 +81,21 @@ public class MapAnalyzer {
 						}
 						
 					}
+					*/
+					
+					MapLocation[] locationsInAttackRange = 
+							MapLocation.getAllMapLocationsWithinRadiusSq(
+									thisMapLocation,2);
+					int numEntryways = 0;
+					for (MapLocation location: locationsInAttackRange){
+						if(location.x>=0 && location.y>=0 && 
+								location.x<mapWidth && location.y<mapHeight){
+							char terrain = terrainMap[location.y][location.x];
+							if (terrain==NORMAL_TILE||terrain==ROAD_TILE){
+								numEntryways++;
+							}
+						}
+					}
 					
 					//weight these factors into a ranking:
 					int entrywayWeight = 10000;
@@ -90,11 +106,11 @@ public class MapAnalyzer {
 					//System.out.println("Before Rank: "+colNum+" Bytecodes: "+ Clock.getBytecodesLeft()+" Round: "+Clock.getRoundNum());
 					
 					rankedMap.put((int) (
-							entrywayWeight/(numEntryways+1)+
-							cowGrowthWeight*cowGrowthRate+
-							proximityWeight/(proximityToHQ+1)+
-							attackWeight/(numAttackLocations+1)),
-							thisMapLocation);
+							entrywayWeight/(numEntryways+1)
+							+cowGrowthWeight*cowGrowthRate
+							+proximityWeight/(proximityToHQ+1))
+							//attackWeight/(numAttackLocations+1))
+							,thisMapLocation);
 					
 					//System.out.println("After rank: "+colNum+" Bytecodes: "+ Clock.getBytecodesLeft()+" Round: "+Clock.getRoundNum());
 					

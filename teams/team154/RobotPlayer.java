@@ -5,9 +5,10 @@ import battlecode.common.*;
 import java.util.ArrayList;
 import java.util.Random;
 
-import team154.BasicPathing;
-import team154.BreadthFirst;
-import team154.VectorFunctions;
+import team154.movement.BasicPathing;
+import team154.movement.BreadthFirst;
+import team154.movement.VectorFunctions;
+import team154.roles.RobotRoles;
 
 public class RobotPlayer{
     
@@ -20,7 +21,7 @@ public class RobotPlayer{
 	static int bigBoxSize = 5;
 
 	//constants for assigning roles
-	static RobotRole myRole = null;
+	static RobotRoles myRole = null;
 	static int currentRoleChannel = 0;
 	static int lastSpawnedID = 0;
 	static boolean justSpawned = false;
@@ -254,7 +255,7 @@ public class RobotPlayer{
     	
 		//give myself the role of HQ
 		if (myRole == null){
-			myRole = RobotRole.HQ;
+			myRole = RobotRoles.HQ;
 		}
 		
 		Direction spawnDir = Direction.NORTH;
@@ -269,7 +270,7 @@ public class RobotPlayer{
 				int spawnedID = spawnedRobot.getID();
 				if(spawnedID>lastSpawnedID){//our next spawn will have a greater id than the last spawn
 					//for now, randomly choose a role
-					RobotRole role = RobotRole.values()[(int)(randall.nextDouble()*10)%4];
+					RobotRoles role = RobotRoles.values()[(int)(randall.nextDouble()*10)%4];
 					
 					rc.broadcast(CommunicationProtocol.ROLE_CHANNELS[currentRoleChannel], 
 								CommunicationProtocol.roleToData(spawnedRobot.getID(), role));
