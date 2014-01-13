@@ -310,7 +310,7 @@ public class RobotPlayer{
             }
             mapCreated = true;
             
-            MapLocation[] idealPastrLocations = MapAnalyzer.findIdealPastrLocations(map,rc.senseCowGrowth(),rc.getLocation());
+            MapLocation[] idealPastrLocations = MapAnalyzer.findIdealPastrLocations(map,rc.senseCowGrowth(),rc.getLocation(),rc);
             System.out.println("I'm here");
             MapAnalyzer.printIdealPastrLocations(map,idealPastrLocations);
             for(int x=0; x<idealPastrLocations.length; x++){
