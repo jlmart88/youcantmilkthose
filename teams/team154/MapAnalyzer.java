@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.lang.Math;
 
 import battlecode.common.*;
 
@@ -28,54 +28,55 @@ public class MapAnalyzer {
 	 *
 	 * @return MapLocation[] array of MapLocations to build a pastr
 	 */
-	public static MapLocation[] findIdealPastrLocations(char[][] terrainMap, double[][] cowGrowthMap, MapLocation hqLocation){
+	public static MapLocation[] findIdealPastrLocations(char[][] terrainMap, double[][] cowGrowthMap, MapLocation hqLocation, RobotController rc){
 		MapLocation idealLocations[] = new MapLocation[NUM_IDEAL_PASTRS];
 		HashMap<Integer, MapLocation> rankedMap = 
 				new HashMap<Integer,MapLocation>(); //create space for a map where
 													//each location has a rank (value)
 		
-		for (int rowNum=0; rowNum<terrainMap.length; rowNum++){
-			for (int colNum=0; colNum<terrainMap[0].length; colNum++){
-				
+		int mapHeight=terrainMap.length;
+		int mapWidth=terrainMap[0].length;
+		
+		for (int rowNum=0; rowNum<mapHeight; rowNum++){
+			//System.out.println("Row: "+rowNum+" Bytecodes: "+Clock.getBytecodesLeft()+" Round: "+Clock.getRoundNum());
+			//rc.breakpoint();
+			for (int colNum=0; colNum<mapWidth; colNum++){
+				//System.out.println("Col: "+colNum+" Bytecodes: "+ Clock.getBytecodesLeft()+" Round: "+Clock.getRoundNum());
+				//rc.breakpoint();
 				if (terrainMap[rowNum][colNum]==NORMAL_TILE||terrainMap[rowNum][colNum]==ROAD_TILE){
 					
-					//determine the number of ways to get to the location in a single move
-					MapLocation[] possibleEntryways = MapLocation.getAllMapLocationsWithinRadiusSq(new MapLocation(colNum,rowNum), 2);
+					MapLocation thisMapLocation = new MapLocation(colNum,rowNum);
 					
-					int numEntryways = 0;
-					for (MapLocation possibleEntryway:possibleEntryways){
-						
-						
-						if(possibleEntryway.x>=0 && possibleEntryway.y>=0 && 
-								possibleEntryway.x<terrainMap[0].length && possibleEntryway.y<terrainMap.length){
-							char terrain = terrainMap[possibleEntryway.y][possibleEntryway.x];
-								if ((terrain==NORMAL_TILE||terrain==ROAD_TILE)&&!(possibleEntryway.x==colNum&&possibleEntryway.y==rowNum)){
-									numEntryways++;
-									}
-						}
-						
-					}
-					
+					//System.out.println("Before Cows: "+colNum+" Bytecodes: "+ Clock.getBytecodesLeft()+" Round: "+Clock.getRoundNum());
 					
 					//determine the cow growth rate at the location
 					double cowGrowthRate = cowGrowthMap[rowNum][colNum];
 					
+					//System.out.println("Before HQ: "+colNum+" Bytecodes: "+ Clock.getBytecodesLeft()+" Round: "+Clock.getRoundNum());
+					
 					//determine the distance to the HQ
-					int proximityToHQ = hqLocation.distanceSquaredTo(new MapLocation(colNum,rowNum));
+					int proximityToHQ = hqLocation.distanceSquaredTo(thisMapLocation);
+					
+					//System.out.println("Before Locations: "+colNum+" Bytecodes: "+ Clock.getBytecodesLeft()+" Round: "+Clock.getRoundNum());
 					
 					//determine the number of locations from which the location can be attacked
+					//determine the number of ways to get to the location in a single move
 					MapLocation[] locationsInAttackRange = 
 							MapLocation.getAllMapLocationsWithinRadiusSq(
-									new MapLocation(colNum,rowNum),RobotType.SOLDIER.attackRadiusMaxSquared);
+									thisMapLocation,RobotType.SOLDIER.attackRadiusMaxSquared);
 					int numAttackLocations = 0;
-					
+					int numEntryways = 0;
 					for (MapLocation location: locationsInAttackRange){
 						if(location.x>=0 && location.y>=0 && 
-								location.x<terrainMap[0].length && location.y<terrainMap.length){
+								location.x<mapWidth && location.y<mapHeight){
 							char terrain = terrainMap[location.y][location.x];
 							if (terrain==NORMAL_TILE||terrain==ROAD_TILE){
 								numAttackLocations++;
+								if (Math.abs(colNum-location.x)<2&&Math.abs(rowNum-location.y)<2){
+									numEntryways++;
+								}
 							}
+							
 						}
 						
 					}
@@ -86,16 +87,22 @@ public class MapAnalyzer {
 					int proximityWeight = 1000;
 					int attackWeight = 10000;
 					
+					//System.out.println("Before Rank: "+colNum+" Bytecodes: "+ Clock.getBytecodesLeft()+" Round: "+Clock.getRoundNum());
+					
 					rankedMap.put((int) (
 							entrywayWeight/(numEntryways+1)+
 							cowGrowthWeight*cowGrowthRate+
 							proximityWeight/(proximityToHQ+1)+
 							attackWeight/(numAttackLocations+1)),
-							new MapLocation(colNum,rowNum));
+							thisMapLocation);
+					
+					//System.out.println("After rank: "+colNum+" Bytecodes: "+ Clock.getBytecodesLeft()+" Round: "+Clock.getRoundNum());
+					
 					
 						
 				}else{
 					//the tile can't be built on, so don't put it in the rankings
+					System.out.println("Found oob tile");
 				}
 			}
 		}
