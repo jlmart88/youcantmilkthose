@@ -8,6 +8,7 @@ import java.util.Random;
 import team154.movement.BasicPathing;
 import team154.movement.BreadthFirst;
 import team154.movement.VectorFunctions;
+import team154.roles.Headquarters;
 import team154.roles.RobotRoles;
 
 public class RobotPlayer{
@@ -16,15 +17,11 @@ public class RobotPlayer{
     static Direction allDirections[] = Direction.values();
     static Random randall = new Random();
     static int directionalLooks[] = new int[]{0,1,-1,2,-2,3,-3,4};
-    static boolean mapCreated = false;
 	static ArrayList<MapLocation> path;
 	static int bigBoxSize = 5;
 
 	//constants for assigning roles
 	static RobotRoles myRole = null;
-	static int currentRoleChannel = 0;
-	static int lastSpawnedID = 0;
-	static boolean justSpawned = false;
     
     public static void run(RobotController rcin){
         rc = rcin;
@@ -41,7 +38,7 @@ public class RobotPlayer{
         while(true){
             try{
                 if(rc.getType()==RobotType.HQ){//if I'm a headquarters
-                    runHeadquarters(height,width);
+                    Headquarters.runHeadquarters(height,width,rc);
                 }else if(rc.getType()==RobotType.SOLDIER){
                     runSoldier(height, width);
                 }
@@ -249,81 +246,5 @@ public class RobotPlayer{
 			}
 		}
 	}
-
-    
-    private static void runHeadquarters(int height, int width) throws GameActionException {
-    	
-		//give myself the role of HQ
-		if (myRole == null){
-			myRole = RobotRoles.HQ;
-		}
-		
-		Direction spawnDir = Direction.NORTH;
-		if(rc.isActive()&&rc.canMove(spawnDir)&&rc.senseRobotCount()<GameConstants.MAX_ROBOTS){
-			rc.spawn(Direction.NORTH);
-			justSpawned = true;//tell the HQ to try to broadcast role information
-		}
-		
-		if(justSpawned){//try to find our most recent spawn, and broadcast its role info
-			Robot[] nearbyRobots = rc.senseNearbyGameObjects(Robot.class, 9, rc.getTeam());
-			for (Robot spawnedRobot:nearbyRobots){
-				int spawnedID = spawnedRobot.getID();
-				if(spawnedID>lastSpawnedID){//our next spawn will have a greater id than the last spawn
-					//for now, randomly choose a role
-					RobotRoles role = RobotRoles.values()[(int)(randall.nextDouble()*10)%4];
-					
-					rc.broadcast(CommunicationProtocol.ROLE_CHANNELS[currentRoleChannel], 
-								CommunicationProtocol.roleToData(spawnedRobot.getID(), role));
-					
-					justSpawned = false; //reset the trigger for broadcasting roles
-					
-					//increment/loop role channel
-					currentRoleChannel = (currentRoleChannel+1)%CommunicationProtocol.ROLE_CHANNEL_NUM; 
-					
-					lastSpawnedID=spawnedID;//track the most recent spawn
-					
-					rc.setIndicatorString(0, "Just Spawned a "+role.name()+" with ID: "+lastSpawnedID);
-				}
-			}
-		}
-        char[][] map = new char[height][width];
-        if(rc.isActive()&&rc.canMove(spawnDir)&&rc.senseRobotCount()<GameConstants.MAX_ROBOTS){
-            rc.spawn(Direction.NORTH);
-        }
-        if(mapCreated == false){ //Create a map of the battlefield
-            for(int y=0; y<height; y++){
-                for(int x=0; x<width; x++){
-                    if(rc.senseTerrainTile(new MapLocation(x,y)) == TerrainTile.NORMAL){
-                        map[y][x] = '-';
-                    }
-                    else if(rc.senseTerrainTile(new MapLocation(x,y)) == TerrainTile.VOID){
-                        map[y][x] = '#';
-                    }
-                    else if(rc.senseTerrainTile(new MapLocation(x,y)) == TerrainTile.OFF_MAP){
-                        map[y][x] = '^';
-                    }
-                    else if(rc.senseTerrainTile(new MapLocation(x,y)) == TerrainTile.ROAD){
-                        map[y][x] = '=';
-                    }
-                    System.out.print(map[y][x]);
-                }
-                System.out.println();
-            }
-            mapCreated = true;
-            
-            MapLocation[] idealPastrLocations = MapAnalyzer.findIdealPastrLocations(map,rc.senseCowGrowth(),rc.getLocation(),rc);
-            System.out.println("I'm here");
-            MapAnalyzer.printIdealPastrLocations(map,idealPastrLocations);
-            for(int x=0; x<idealPastrLocations.length; x++){
-            	rc.broadcast(15000+x, VectorFunctions.locToInt(idealPastrLocations[x]));
-            }
-        }
-        
-        
-        
-//        int editingChannel = (Clock.getRoundNum()%2);
-//        int usingChannel = ((Clock.getRoundNum()+1)%2);
-//        rc.broadcast(editingChannel, 0);
-//        rc.broadcast(editingChannel+2, 0);
-    }
+	
 }
