@@ -123,7 +123,7 @@ public class MapAnalyzer {
 					}
 				}else{
 					//the tile can't be built on, so don't put it in the rankings
-					System.out.println("Found oob tile");
+					//System.out.println("Found oob tile");
 				}
 			}
 		}
@@ -136,11 +136,26 @@ public class MapAnalyzer {
 			}
 		});
 		
-		for (int i=0; i<NUM_IDEAL_PASTRS; i++){
-			int bestRanking = rankings.get(i);
+		int i = 0;
+		for (int j=0; i<NUM_IDEAL_PASTRS; j++){
+			int bestRanking = rankings.get(j);
 			MapLocation bestLocation = rankedMap.get(bestRanking);
+			//make sure this PASTR isn't too close to the other chosen ones
+			boolean tooClose = false;
+			for (MapLocation location: idealLocations){
+				//System.out.println(location);
+				if (location!=null){
+					if (location.distanceSquaredTo(bestLocation)<RobotType.PASTR.sensorRadiusSquared*4+1){
+						tooClose = true;
+					}
+				}
+			}
+			if (!tooClose){
 			System.out.println("BEST RANKING: "+bestRanking+ " LOCATION: "+bestLocation);
 			idealLocations[i]=bestLocation;
+			i++;
+			}
+			
 		}
 		
 		return idealLocations;

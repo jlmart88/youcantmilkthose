@@ -131,7 +131,7 @@ public class RobotPlayer{
     			Direction bdir = BreadthFirst.getNextDirection(path, bigBoxSize);
     			BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
     		}
-		}else{
+    	}else{
     		rc.setIndicatorString(1, "DOING NOTHING");
 		}
     }
@@ -159,9 +159,6 @@ public class RobotPlayer{
 		}
 		else if(myRole.name() == "DEFENDER"){
 			tryToDefend();
-		}
-		else{
-			tryToShoot();
 		}
 
         //movement
