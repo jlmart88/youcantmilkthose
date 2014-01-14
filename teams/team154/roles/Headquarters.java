@@ -18,8 +18,6 @@ import battlecode.common.TerrainTile;
 
 public class Headquarters {
 	
-	static Random randall = new Random();
-	
 	//constants for assigning roles
     static boolean mapCreated = false;
 	static int currentRoleChannel = 0;
@@ -30,7 +28,7 @@ public class Headquarters {
 
 
 	public static void runHeadquarters(int height, int width, RobotController rc) throws GameActionException {
-		randall.setSeed(rc.getRobot().getID());
+
 		//attacks nearby enemies
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent());
 		if(enemyRobots.length>0){
@@ -62,7 +60,7 @@ public class Headquarters {
 				if(spawnedID>lastSpawnedID){//our next spawn will have a greater id than the last spawn
 					
 					//for now, randomly choose a role
-					//RobotRoles role = RobotRoles.values()[(int)(randall.nextDouble()*10)%4];
+					//RobotRoles role = RobotRoles.values()[(int)(RobotPlayer.randall.nextDouble()*10)%4];
 					
 					//assign roles based on ideal numbers in RobotRoles
 					RobotRoles role = Headquarters.getNextRole(rc, spawnedID);
@@ -115,7 +113,7 @@ public class Headquarters {
             System.out.println("I'm here");
             MapAnalyzer.printIdealPastrLocations(map,idealPastrLocations);
             for(int x=0; x<idealPastrLocations.length; x++){
-            	rc.broadcast(15000+x, VectorFunctions.locToInt(idealPastrLocations[x]));
+            	rc.broadcast(CommunicationProtocol.PASTR_LOCATION_CHANNEL_MIN+x, VectorFunctions.locToInt(idealPastrLocations[x]));
             }
         }        
     }
@@ -145,7 +143,8 @@ public class Headquarters {
 				rolesCountDict.put(role, currentNum+1);
 			}
 		}
-		System.out.println(rolesCountDict);
+		//System.out.println(rolesCountDict);
+		//System.out.print(currentRolesDict);
 		//System.out.println((RobotRoles.COWBOY.idealNum+RobotRoles.CONSTRUCTOR.idealNum)-
 		//		(rolesCountDict.get(RobotRoles.CONSTRUCTOR)+rolesCountDict.get(RobotRoles.COWBOY)));
 
