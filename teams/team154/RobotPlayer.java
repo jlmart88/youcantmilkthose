@@ -21,6 +21,8 @@ public class RobotPlayer{
 	public static ArrayList<MapLocation> path;
 	public static int bigBoxSize = 5;
 	
+	static MapLocation currentPastr = null;
+	
 	//constants for assigning roles
 	static RobotRoles myRole = null;
     
@@ -39,6 +41,7 @@ public class RobotPlayer{
                 if(rc.getType()==RobotType.HQ){//if I'm a headquarters
                     Headquarters.runHeadquarters(height,width,rc);
                 }else if(rc.getType()==RobotType.SOLDIER){
+                	rc.setIndicatorString(1, "");
                     runSoldier(height, width);
                 }
                 rc.yield();
@@ -73,7 +76,7 @@ public class RobotPlayer{
     		path = BreadthFirst.pathTo(VectorFunctions.mldivide(currentLoc,bigBoxSize), VectorFunctions.mldivide(pastrLoc,bigBoxSize), 100000);
     	}
     	//follow breadthFirst path
-    	if(!closeEnough(currentLoc,pastrLoc,7)){
+    	if(!closeEnough(currentLoc,pastrLoc,5)){
     		Direction bdir = BreadthFirst.getNextDirection(path, bigBoxSize);
     		BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
     	}
@@ -100,31 +103,35 @@ public class RobotPlayer{
     			robotLocations[i] = anEnemyInfo.location;
     		}
     		MapLocation closestEnemyLoc = VectorFunctions.findClosest(robotLocations, rc.getLocation());
-    		MapLocation lowestEnemyHPLoc = VectorFunctions.findLowest(rc, enemyRobots);
-    		if(lowestEnemyHPLoc != null){//attacks lowest HP enemy if in range
-    			if(lowestEnemyHPLoc.distanceSquaredTo(rc.getLocation())<=rc.getType().attackRadiusMaxSquared){
-    				rc.setIndicatorString(1, "trying to shoot");
-    				if(rc.isActive()){
-    					rc.attackSquare(lowestEnemyHPLoc);
-    				}
-    			}
-    		}
-    		else if(closestEnemyLoc.distanceSquaredTo(rc.getLocation())<=rc.getType().attackRadiusMaxSquared){
+    		if(closestEnemyLoc.distanceSquaredTo(rc.getLocation())<=rc.getType().attackRadiusMaxSquared){
     			rc.setIndicatorString(1, "trying to shoot");
     			if(rc.isActive()){
     				rc.attackSquare(closestEnemyLoc);
     			}
-    		}else{
+    		}else if (!closeEnough(rc.getLocation(), rc.senseEnemyHQLocation(), 6)){
+    			System.out.println("going closer");
     			Direction towardClosest = rc.getLocation().directionTo(closestEnemyLoc);
     			rc.setIndicatorString(1, "trying to go closer to " + closestEnemyLoc);
     			simpleMove(towardClosest);
     		}
     	}
     	else if(rc.readBroadcast(20000)!=-100){
+    		
     		MapLocation pastrLoc = VectorFunctions.intToLoc(rc.readBroadcast(20000));
     		rc.setIndicatorString(1, "Going to attack location: " + pastrLoc);
-    		if(path.size()<=1){
+    		MapLocation[] pastrLocs = rc.sensePastrLocations(rc.getTeam().opponent());
+    		boolean inList = false;
+    	
+			for (MapLocation location:pastrLocs){
+				if (location.equals(currentPastr)){
+					inList=true;
+				}
+			}
+			
+    		
+    		if(path.size()<=1 || !inList){
     			path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(pastrLoc,bigBoxSize), 100000);
+    			currentPastr = pastrLoc;
     		}
     		//follow breadthFirst path
     		if(path.size()>1){
