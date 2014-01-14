@@ -82,20 +82,13 @@ public class Headquarters {
 				}
 			}
 		}
-<<<<<<< HEAD
-        
-        if(rc.isActive()&&rc.canMove(spawnDir)&&rc.senseRobotCount()<GameConstants.MAX_ROBOTS){
-            rc.spawn(Direction.NORTH);
-        }
-=======
+
 		MapLocation[] enemyPastrLocations = rc.sensePastrLocations(rc.getTeam().opponent());
 		if(enemyPastrLocations.length>0){
 			MapLocation closestPastr = VectorFunctions.findClosest(enemyPastrLocations, rc.getLocation());
 			rc.broadcast(20000, VectorFunctions.locToInt(closestPastr));
 		}
 
-        char[][] map = new char[height][width];
->>>>>>> cf841761f8a92bf604373b7986ca7eb1a097aa00
         if(mapCreated == false){ //Create a map of the battlefield
         	char[][] map = new char[height][width];
             for(int y=0; y<height; y++){
