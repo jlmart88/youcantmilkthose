@@ -5,6 +5,7 @@ import java.util.Random;
 
 import team154.CommunicationProtocol;
 import team154.MapAnalyzer;
+import team154.RobotPlayer;
 import team154.movement.VectorFunctions;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
@@ -12,6 +13,7 @@ import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
+import battlecode.common.RobotInfo;
 import battlecode.common.TerrainTile;
 
 public class Headquarters {
@@ -24,16 +26,33 @@ public class Headquarters {
 	static int lastSpawnedID = 0;
 	static boolean justSpawned = false;
 	static HashMap<Integer, RobotRoles> currentRolesDict = new HashMap<Integer,RobotRoles>();
-	
+	static Direction[] directions = {Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
 
-@SuppressWarnings("unused")
-public static void runHeadquarters(int height, int width, RobotController rc) throws GameActionException {
+
+	public static void runHeadquarters(int height, int width, RobotController rc) throws GameActionException {
 		randall.setSeed(rc.getRobot().getID());
-
-		Direction spawnDir = Direction.NORTH;
-		if(rc.isActive()&&rc.canMove(spawnDir)&&rc.senseRobotCount()<GameConstants.MAX_ROBOTS){
-			rc.spawn(Direction.NORTH);
-			justSpawned = true;//tell the HQ to try to broadcast role information
+		//attacks nearby enemies
+		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent());
+		if(enemyRobots.length>0){
+			int locationSize = enemyRobots.length;
+			for(int i=0;i<locationSize;i++){
+				Robot anEnemy = enemyRobots[i];
+				RobotInfo anEnemyInfo = rc.senseRobotInfo(anEnemy);
+				MapLocation enemyRobotLocation = anEnemyInfo.location;
+				if(enemyRobotLocation.distanceSquaredTo(rc.getLocation())<rc.getType().attackRadiusMaxSquared){
+					rc.setIndicatorString(1, "trying to shoot");
+					if(rc.isActive()){
+						rc.attackSquare(enemyRobotLocation);
+					}
+				}
+			}
+		}
+		for(Direction spawnDir:directions){
+			if(rc.isActive()&&rc.canMove(spawnDir)&&rc.senseRobotCount()<GameConstants.MAX_ROBOTS){
+				rc.spawn(spawnDir);
+				justSpawned = true;//tell the HQ to try to broadcast role information
+				break;
+			}
 		}
 		
 		if(justSpawned){//try to find our most recent spawn, and broadcast its role info
@@ -63,10 +82,13 @@ public static void runHeadquarters(int height, int width, RobotController rc) th
 				}
 			}
 		}
+		MapLocation[] enemyPastrLocations = rc.sensePastrLocations(rc.getTeam().opponent());
+		if(enemyPastrLocations.length>0){
+			MapLocation closestPastr = VectorFunctions.findClosest(enemyPastrLocations, rc.getLocation());
+			rc.broadcast(20000, VectorFunctions.locToInt(closestPastr));
+		}
+
         char[][] map = new char[height][width];
-        if(rc.isActive()&&rc.canMove(spawnDir)&&rc.senseRobotCount()<GameConstants.MAX_ROBOTS){
-            rc.spawn(Direction.NORTH);
-        }
         if(mapCreated == false){ //Create a map of the battlefield
             for(int y=0; y<height; y++){
                 for(int x=0; x<width; x++){
@@ -94,14 +116,7 @@ public static void runHeadquarters(int height, int width, RobotController rc) th
             for(int x=0; x<idealPastrLocations.length; x++){
             	rc.broadcast(15000+x, VectorFunctions.locToInt(idealPastrLocations[x]));
             }
-        }
-        
-        
-        
-//        int editingChannel = (Clock.getRoundNum()%2);
-//        int usingChannel = ((Clock.getRoundNum()+1)%2);
-//        rc.broadcast(editingChannel, 0);
-//        rc.broadcast(editingChannel+2, 0);
+        }        
     }
 
 
