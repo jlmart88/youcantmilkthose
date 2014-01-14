@@ -8,17 +8,18 @@ import java.util.Random;
 import team154.movement.BasicPathing;
 import team154.movement.BreadthFirst;
 import team154.movement.VectorFunctions;
+import team154.roles.Cowboy;
 import team154.roles.Headquarters;
 import team154.roles.RobotRoles;
 
 public class RobotPlayer{
     
     public static RobotController rc;
-    static Direction allDirections[] = Direction.values();
-    static Random randall = new Random();
-    static int directionalLooks[] = new int[]{0,1,-1,2,-2,3,-3,4};
-	static ArrayList<MapLocation> path;
-	static int bigBoxSize = 5;
+    public static Direction allDirections[] = Direction.values();
+    public static Random randall = new Random();
+    public static int directionalLooks[] = new int[]{0,1,-1,2,-2,3,-3,4};
+	public static ArrayList<MapLocation> path;
+	public static int bigBoxSize = 5;
 	
 	//constants for assigning roles
 	static RobotRoles myRole = null;
@@ -47,7 +48,7 @@ public class RobotPlayer{
         }
     }
 
-    private static boolean closeEnough(MapLocation loc1, MapLocation loc2){
+    public static boolean closeEnough(MapLocation loc1, MapLocation loc2){
     	if(Math.abs(loc1.x - loc2.x) + Math.abs(loc1.y - loc2.y) <= 7){
     		return true;
     	}
@@ -57,7 +58,7 @@ public class RobotPlayer{
     private static void tryToConstruct() throws GameActionException{
     	int x = rc.getRobot().getID()%5;
     	MapLocation currentLoc = rc.getLocation();
-    	MapLocation pastrLoc = VectorFunctions.intToLoc(rc.readBroadcast(15000+x));
+    	MapLocation pastrLoc = VectorFunctions.intToLoc(rc.readBroadcast(CommunicationProtocol.PASTR_LOCATION_CHANNEL_MIN+x));
     	rc.setIndicatorString(2, "I WILL CONSTRUCT AT " + pastrLoc);
     	//there are no enemies, so build a tower
     	if(rc.sensePastrLocations(rc.getTeam()).length<10){
@@ -81,28 +82,6 @@ public class RobotPlayer{
     	}
     }
     
-    private static void tryToGather() throws GameActionException{
-    	MapLocation[] pastrLocs = rc.sensePastrLocations(rc.getTeam());
-    	MapLocation pastrLoc = rc.getLocation();
-    	if(pastrLocs.length>0){
-    		int x = rc.getRobot().getID()%pastrLocs.length;
-    		if(path.size()==0){
-    			pastrLoc = pastrLocs[x];
-    			path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(pastrLoc,bigBoxSize), 100000);
-    		}
-    		//follow breadthFirst path
-    		if(!closeEnough(rc.getLocation(),pastrLoc)){
-    			Direction bdir = BreadthFirst.getNextDirection(path, bigBoxSize);
-    			BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
-    		}
-    		else{
-    			Direction chosenDirection = allDirections[(int)(randall.nextDouble()*8)];
-    			if(rc.isActive()&&rc.canMove(chosenDirection)){
-    				rc.move(chosenDirection);
-    			}
-    		}
-    	}
-    }
     
     private static void tryToDefend() throws GameActionException{
     	
@@ -198,7 +177,7 @@ public class RobotPlayer{
 			tryToConstruct();
 		}
 		else if(myRole.name() == "COWBOY"){
-			tryToGather();
+			Cowboy.tryToGather(rc);
 		}
 		else if(myRole.name() == "SOLDIER"){
 			tryToShoot();
