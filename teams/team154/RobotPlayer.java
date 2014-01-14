@@ -19,6 +19,7 @@ public class RobotPlayer{
     static boolean mapCreated = false;
 	static ArrayList<MapLocation> path;
 	static int bigBoxSize = 5;
+	static Direction[] directions = {Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
 
 	//constants for assigning roles
 	static RobotRoles myRole = null;
@@ -31,13 +32,6 @@ public class RobotPlayer{
         randall.setSeed(rc.getRobot().getID());
         int height = rc.getMapHeight();
         int width = rc.getMapWidth();
-		if(rc.getType()==RobotType.HQ){
-		}else{
-			BreadthFirst.init(rc, bigBoxSize);
-			MapLocation goal = rc.senseEnemyHQLocation();
-			path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(goal,bigBoxSize), 100000);
-			//VectorFunctions.printPath(path,bigBoxSize);
-		}
         while(true){
             try{
                 if(rc.getType()==RobotType.HQ){//if I'm a headquarters
@@ -47,7 +41,7 @@ public class RobotPlayer{
                 }
                 rc.yield();
             }catch (Exception e){
-//                e.printStackTrace();
+               e.printStackTrace();
             }
         }
     }
@@ -106,6 +100,10 @@ public class RobotPlayer{
     	}
     }
     
+    private static void tryToDefend() throws GameActionException{
+    	
+    }
+    
     private static void tryToShoot() throws GameActionException{
     	Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent());
     	boolean HQdetected = false;
@@ -131,10 +129,15 @@ public class RobotPlayer{
     					robotLocations[i] = new MapLocation(10000,10000);
     				}
     			}
-    			//System.out.println(robotLocations[0]);
     			MapLocation closestEnemyLoc = VectorFunctions.findClosest(robotLocations, rc.getLocation());
-
-    			if(closestEnemyLoc.distanceSquaredTo(rc.getLocation())<rc.getType().attackRadiusMaxSquared){
+    			MapLocation lowestEnemyHPLoc = VectorFunctions.findLowest(rc, enemyRobots);
+    			if(lowestEnemyHPLoc.distanceSquaredTo(rc.getLocation())<rc.getType().attackRadiusMaxSquared){
+    				rc.setIndicatorString(1, "trying to shoot");
+    				if(rc.isActive()){
+    					rc.attackSquare(lowestEnemyHPLoc);
+    				}
+    			}
+    			else if(closestEnemyLoc.distanceSquaredTo(rc.getLocation())<rc.getType().attackRadiusMaxSquared){
     				rc.setIndicatorString(1, "trying to shoot");
     				if(rc.isActive()){
     					rc.attackSquare(closestEnemyLoc);
@@ -158,16 +161,19 @@ public class RobotPlayer{
     			//follow breadthFirst path
     			Direction bdir = BreadthFirst.getNextDirection(path, bigBoxSize);
     			BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
-
     		}
-    	}else{
-    			if(path.size()==0){
-    				path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(rc.senseEnemyHQLocation(),bigBoxSize), 100000);
-    			}
-    			//follow breadthFirst path
-    			Direction bdir = BreadthFirst.getNextDirection(path, bigBoxSize);
-    			BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
-    		}
+    	}else if(rc.readBroadcast(20000)!=-100){
+	    	MapLocation pastrLoc = VectorFunctions.intToLoc(rc.readBroadcast(20000));
+    		rc.setIndicatorString(1, "Going to attack location: " + pastrLoc);
+			if(path.size()==0){
+				path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(pastrLoc,bigBoxSize), 100000);
+			}
+			//follow breadthFirst path
+			Direction bdir = BreadthFirst.getNextDirection(path, bigBoxSize);
+			BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
+		}else{
+    		rc.setIndicatorString(1, "DOING NOTHING");
+		}
     }
     
     private static void runSoldier(int height, int width) throws GameActionException {
@@ -187,6 +193,12 @@ public class RobotPlayer{
 		}
 		else if(myRole.name() == "COWBOY"){
 			tryToGather();
+		}
+		else if(myRole.name() == "SOLDIER"){
+			tryToShoot();
+		}
+		else if(myRole.name() == "DEFENDER"){
+			tryToDefend();
 		}
 		else{
 			tryToShoot();
@@ -208,26 +220,26 @@ public class RobotPlayer{
 //        swarmMove(height, width);
     }
     
-    private static void swarmMove(int height, int width) throws GameActionException{
-        Direction chosenDirection = rc.getLocation().directionTo(rc.senseEnemyHQLocation());
-        if(rc.isActive()){
-            if(randall.nextDouble()<0.5){//go to swarm center
-                for(int directionalOffset:directionalLooks){
-                    int forwardInt = chosenDirection.ordinal();
-                    Direction trialDir = allDirections[(forwardInt+directionalOffset+8)%8];
-                    if(rc.canMove(trialDir)){
-                        rc.move(trialDir);
-                        break;
-                    }
-                }
-            }else{//go wherever the wind takes you
-                Direction d = allDirections[(int)(randall.nextDouble()*8)];
-                if(rc.isActive()&&rc.canMove(d)){
-                    rc.move(d);
-                }
-            }
-        }
-    }
+//    private static void swarmMove(int height, int width) throws GameActionException{
+//        Direction chosenDirection = rc.getLocation().directionTo(rc.senseEnemyHQLocation());
+//        if(rc.isActive()){
+//            if(randall.nextDouble()<0.5){//go to swarm center
+//                for(int directionalOffset:directionalLooks){
+//                    int forwardInt = chosenDirection.ordinal();
+//                    Direction trialDir = allDirections[(forwardInt+directionalOffset+8)%8];
+//                    if(rc.canMove(trialDir)){
+//                        rc.move(trialDir);
+//                        break;
+//                    }
+//                }
+//            }else{//go wherever the wind takes you
+//                Direction d = allDirections[(int)(randall.nextDouble()*8)];
+//                if(rc.isActive()&&rc.canMove(d)){
+//                    rc.move(d);
+//                }
+//            }
+//        }
+//    }
         
     private static int senseCowsAtRange(MapLocation loc) throws GameActionException{
         int cows = 0;
@@ -250,20 +262,38 @@ public class RobotPlayer{
 		}
 	}
 
-    
-    private static void runHeadquarters(int height, int width) throws GameActionException {
-    	
+
+	private static void runHeadquarters(int height, int width) throws GameActionException {
+
 		//give myself the role of HQ
 		if (myRole == null){
 			myRole = RobotRoles.HQ;
 		}
 		
-		Direction spawnDir = Direction.NORTH;
-		if(rc.isActive()&&rc.canMove(spawnDir)&&rc.senseRobotCount()<GameConstants.MAX_ROBOTS){
-			rc.spawn(Direction.NORTH);
-			justSpawned = true;//tell the HQ to try to broadcast role information
+		//attacks nearby enemies
+		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent());
+		if(enemyRobots.length>0){
+			int locationSize = enemyRobots.length;
+			for(int i=0;i<locationSize;i++){
+				Robot anEnemy = enemyRobots[i];
+				RobotInfo anEnemyInfo = rc.senseRobotInfo(anEnemy);
+				MapLocation enemyRobotLocation = anEnemyInfo.location;
+				if(enemyRobotLocation.distanceSquaredTo(rc.getLocation())<rc.getType().attackRadiusMaxSquared){
+					rc.setIndicatorString(1, "trying to shoot");
+					if(rc.isActive()){
+						rc.attackSquare(enemyRobotLocation);
+					}
+				}
+			}
 		}
-		
+		for(Direction spawnDir:directions){
+			if(rc.isActive()&&rc.canMove(spawnDir)&&rc.senseRobotCount()<GameConstants.MAX_ROBOTS){
+				rc.spawn(spawnDir);
+				justSpawned = true;//tell the HQ to try to broadcast role information
+				break;
+			}
+		}
+
 		if(justSpawned){//try to find our most recent spawn, and broadcast its role info
 			Robot[] nearbyRobots = rc.senseNearbyGameObjects(Robot.class, 9, rc.getTeam());
 			for (Robot spawnedRobot:nearbyRobots){
@@ -271,59 +301,55 @@ public class RobotPlayer{
 				if(spawnedID>lastSpawnedID){//our next spawn will have a greater id than the last spawn
 					//for now, randomly choose a role
 					RobotRoles role = RobotRoles.values()[(int)(randall.nextDouble()*10)%4];
-					
+
 					rc.broadcast(CommunicationProtocol.ROLE_CHANNELS[currentRoleChannel], 
-								CommunicationProtocol.roleToData(spawnedRobot.getID(), role));
-					
+							CommunicationProtocol.roleToData(spawnedRobot.getID(), role));
+
 					justSpawned = false; //reset the trigger for broadcasting roles
-					
+
 					//increment/loop role channel
 					currentRoleChannel = (currentRoleChannel+1)%CommunicationProtocol.ROLE_CHANNEL_NUM; 
-					
+
 					lastSpawnedID=spawnedID;//track the most recent spawn
-					
+
 					rc.setIndicatorString(0, "Just Spawned a "+role.name()+" with ID: "+lastSpawnedID);
 				}
 			}
 		}
-        char[][] map = new char[height][width];
-        if(rc.isActive()&&rc.canMove(spawnDir)&&rc.senseRobotCount()<GameConstants.MAX_ROBOTS){
-            rc.spawn(Direction.NORTH);
-        }
-        if(mapCreated == false){ //Create a map of the battlefield
-            for(int y=0; y<height; y++){
-                for(int x=0; x<width; x++){
-                    if(rc.senseTerrainTile(new MapLocation(x,y)) == TerrainTile.NORMAL){
-                        map[y][x] = '-';
-                    }
-                    else if(rc.senseTerrainTile(new MapLocation(x,y)) == TerrainTile.VOID){
-                        map[y][x] = '#';
-                    }
-                    else if(rc.senseTerrainTile(new MapLocation(x,y)) == TerrainTile.OFF_MAP){
-                        map[y][x] = '^';
-                    }
-                    else if(rc.senseTerrainTile(new MapLocation(x,y)) == TerrainTile.ROAD){
-                        map[y][x] = '=';
-                    }
-                    System.out.print(map[y][x]);
-                }
-                System.out.println();
-            }
-            mapCreated = true;
-            
-            MapLocation[] idealPastrLocations = MapAnalyzer.findIdealPastrLocations(map,rc.senseCowGrowth(),rc.getLocation(),rc);
-            System.out.println("I'm here");
-            MapAnalyzer.printIdealPastrLocations(map,idealPastrLocations);
-            for(int x=0; x<idealPastrLocations.length; x++){
-            	rc.broadcast(15000+x, VectorFunctions.locToInt(idealPastrLocations[x]));
-            }
-        }
-        
-        
-        
-//        int editingChannel = (Clock.getRoundNum()%2);
-//        int usingChannel = ((Clock.getRoundNum()+1)%2);
-//        rc.broadcast(editingChannel, 0);
-//        rc.broadcast(editingChannel+2, 0);
-    }
+		MapLocation[] enemyPastrLocations = rc.sensePastrLocations(rc.getTeam().opponent());
+		if(enemyPastrLocations.length>0){
+			MapLocation closestPastr = VectorFunctions.findClosest(enemyPastrLocations, rc.getLocation());
+			rc.broadcast(20000, VectorFunctions.locToInt(closestPastr));
+		}
+		char[][] map = new char[height][width];
+		if(mapCreated == false){ //Create a map of the battlefield
+			for(int y=0; y<height; y++){
+				for(int x=0; x<width; x++){
+					if(rc.senseTerrainTile(new MapLocation(x,y)) == TerrainTile.NORMAL){
+						map[y][x] = '-';
+					}
+					else if(rc.senseTerrainTile(new MapLocation(x,y)) == TerrainTile.VOID){
+						map[y][x] = '#';
+					}
+					else if(rc.senseTerrainTile(new MapLocation(x,y)) == TerrainTile.OFF_MAP){
+						map[y][x] = '^';
+					}
+					else if(rc.senseTerrainTile(new MapLocation(x,y)) == TerrainTile.ROAD){
+						map[y][x] = '=';
+					}
+					System.out.print(map[y][x]);
+				}
+				System.out.println();
+			}
+			mapCreated = true;
+
+			MapLocation[] idealPastrLocations = MapAnalyzer.findIdealPastrLocations(map,rc.senseCowGrowth(),rc.getLocation(),rc);
+			System.out.println("I'm here");
+			MapAnalyzer.printIdealPastrLocations(map,idealPastrLocations);
+			for(int x=0; x<idealPastrLocations.length; x++){
+				rc.broadcast(15000+x, VectorFunctions.locToInt(idealPastrLocations[x]));
+			}
+				rc.broadcast(20000, -100);
+		}
+	}
 }
