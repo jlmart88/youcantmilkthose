@@ -63,11 +63,12 @@ public static void runHeadquarters(int height, int width, RobotController rc) th
 				}
 			}
 		}
-        char[][] map = new char[height][width];
+        
         if(rc.isActive()&&rc.canMove(spawnDir)&&rc.senseRobotCount()<GameConstants.MAX_ROBOTS){
             rc.spawn(Direction.NORTH);
         }
         if(mapCreated == false){ //Create a map of the battlefield
+        	char[][] map = new char[height][width];
             for(int y=0; y<height; y++){
                 for(int x=0; x<width; x++){
                     if(rc.senseTerrainTile(new MapLocation(x,y)) == TerrainTile.NORMAL){
@@ -137,7 +138,7 @@ public static void runHeadquarters(int height, int width, RobotController rc) th
 		
 		//figure out what we need
 		//Soldier or farmer-related?
-		if (((RobotRoles.SOLDIER.idealNum - rolesCountDict.get(RobotRoles.SOLDIER))/2)>
+		if ((RobotRoles.SOLDIER.idealNum - rolesCountDict.get(RobotRoles.SOLDIER))>
 				((RobotRoles.COWBOY.idealNum+RobotRoles.CONSTRUCTOR.idealNum)-
 				(rolesCountDict.get(RobotRoles.CONSTRUCTOR)+rolesCountDict.get(RobotRoles.COWBOY)))){
 			return RobotRoles.SOLDIER;
