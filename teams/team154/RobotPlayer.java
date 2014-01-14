@@ -20,8 +20,12 @@ public class RobotPlayer{
     public static int directionalLooks[] = new int[]{0,1,-1,2,-2,3,-3,4};
 	public static ArrayList<MapLocation> path;
 	public static int bigBoxSize = 5;
+	public static int height;
+	public static int width;
+	public static MapLocation enemyHQLocation;
 	
-	static MapLocation currentPastr = null;
+	static MapLocation currentPastr;
+	static boolean setInitialPath = false;
 	
 	//constants for assigning roles
 	static RobotRoles myRole = null;
@@ -29,8 +33,10 @@ public class RobotPlayer{
     public static void run(RobotController rcin){
         rc = rcin;
         randall.setSeed(rc.getRobot().getID());
-        int height = rc.getMapHeight();
-        int width = rc.getMapWidth();
+        height = rc.getMapHeight();
+        width = rc.getMapWidth();
+        enemyHQLocation = rc.senseEnemyHQLocation();
+        currentPastr = rc.getLocation();
         if(rc.getType()!=RobotType.HQ){
         	BreadthFirst.init(rc,  bigBoxSize);
         	MapLocation goal = rc.getLocation();
@@ -72,17 +78,18 @@ public class RobotPlayer{
     			}
     		}
     	}
-    	if(path.size()==0){
+    	if(path.size()<=1&&!setInitialPath){
     		path = BreadthFirst.pathTo(VectorFunctions.mldivide(currentLoc,bigBoxSize), VectorFunctions.mldivide(pastrLoc,bigBoxSize), 100000);
+    		setInitialPath=true;
     	}
     	//follow breadthFirst path
-    	if(!closeEnough(currentLoc,pastrLoc,5)){
+    	if(!closeEnough(currentLoc,pastrLoc,5)&&path.size()>1){
     		Direction bdir = BreadthFirst.getNextDirection(path, bigBoxSize);
     		BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
     	}
     	else{
 			Direction towardClosest = rc.getLocation().directionTo(pastrLoc);
-			simpleMove(towardClosest);
+			BasicPathing.tryToMove(towardClosest,true,rc,directionalLooks,allDirections);
     	}
     }
     
@@ -92,7 +99,6 @@ public class RobotPlayer{
     
     public static void tryToShoot() throws GameActionException{
     	Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent());
-    	MapLocation HQLocation = rc.senseEnemyHQLocation();
     	if(enemyRobots.length>0){//if there are enemies
     		rc.setIndicatorString(0, "There are enemies");
     		int locationSize = enemyRobots.length;
@@ -103,43 +109,73 @@ public class RobotPlayer{
     			robotLocations[i] = anEnemyInfo.location;
     		}
     		MapLocation closestEnemyLoc = VectorFunctions.findClosest(robotLocations, rc.getLocation());
-    		if(closestEnemyLoc.distanceSquaredTo(rc.getLocation())<=rc.getType().attackRadiusMaxSquared){
-    			rc.setIndicatorString(1, "trying to shoot");
-    			if(rc.isActive()){
-    				rc.attackSquare(closestEnemyLoc);
-    			}
-    		}else if (!closeEnough(rc.getLocation(), rc.senseEnemyHQLocation(), 6)){
-    			System.out.println("going closer");
-    			Direction towardClosest = rc.getLocation().directionTo(closestEnemyLoc);
-    			rc.setIndicatorString(1, "trying to go closer to " + closestEnemyLoc);
-    			simpleMove(towardClosest);
+    		if(closestEnemyLoc!=null){
+	    		if(closestEnemyLoc.distanceSquaredTo(rc.getLocation())<=rc.getType().attackRadiusMaxSquared){
+	    			rc.setIndicatorString(1, "trying to shoot");
+	    			if(rc.isActive()){
+	    				rc.attackSquare(closestEnemyLoc);
+	    			}
+	    		}else{
+	    			//System.out.println("going closer");
+	    			Direction towardClosest = rc.getLocation().directionTo(closestEnemyLoc);
+	    			rc.setIndicatorString(1, "trying to go closer to " + closestEnemyLoc);
+	    			BasicPathing.tryToMove(towardClosest,true,rc,directionalLooks,allDirections);
+	    		}
     		}
     	}
     	else if(rc.readBroadcast(20000)!=-100){
-    		
-    		MapLocation pastrLoc = VectorFunctions.intToLoc(rc.readBroadcast(20000));
-    		rc.setIndicatorString(1, "Going to attack location: " + pastrLoc);
+    		rc.setIndicatorString(0, "There are pastrs to attack");
+    		rc.setIndicatorString(1, "Going to attack location: " + currentPastr);
     		MapLocation[] pastrLocs = rc.sensePastrLocations(rc.getTeam().opponent());
     		boolean inList = false;
-    	
+    		
 			for (MapLocation location:pastrLocs){
 				if (location.equals(currentPastr)){
 					inList=true;
 				}
 			}
-			
-    		
-    		if(path.size()<=1 || !inList){
-    			path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(pastrLoc,bigBoxSize), 100000);
-    			currentPastr = pastrLoc;
+			if (!inList){
+				MapLocation pastrLoc = VectorFunctions.intToLoc(rc.readBroadcast(20000));
+				currentPastr = pastrLoc;
+				setInitialPath = false;
+				inList = true;
+			}
+			if (inList&&!setInitialPath){
+				rc.setIndicatorString(2, "Setting path to: "+currentPastr);
+				path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(currentPastr,bigBoxSize), 100000);
+    			rc.setIndicatorString(2, "Got path");
+				setInitialPath = true;
+			}
+			if(path.size()<=1&&setInitialPath){
+				BasicPathing.tryToMove(rc.getLocation().directionTo(currentPastr),true, rc, directionalLooks, allDirections);
     		}
     		//follow breadthFirst path
-    		if(path.size()>1){
+			else if(path.size()>1){
     			Direction bdir = BreadthFirst.getNextDirection(path, bigBoxSize);
     			BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
+    			
     		}
-    	}else{
-    		rc.setIndicatorString(1, "DOING NOTHING");
+    	}else if (rc.sensePastrLocations(rc.getTeam()).length>0){
+    		rc.setIndicatorString(0, "There are pastrs to defend");
+    		MapLocation[] pastrLocs = rc.sensePastrLocations(rc.getTeam());
+    		//choose one of our pastrs and move toward it
+    		int x = rc.getRobot().getID()%pastrLocs.length;
+    		MapLocation pastrLoc = pastrLocs[x];
+    		if (!setInitialPath){
+				path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(pastrLoc,bigBoxSize), 100000);
+    			setInitialPath = true;
+			}
+    		if(path.size()<=1&&setInitialPath){
+				BasicPathing.tryToMove(rc.getLocation().directionTo(pastrLoc),true, rc, directionalLooks, allDirections);
+    		}
+    		//follow breadthFirst path
+			else if(path.size()>1){
+    			Direction bdir = BreadthFirst.getNextDirection(path, bigBoxSize);
+    			BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
+			}
+    	}
+    	else{
+    		rc.setIndicatorString(0, "DOING NOTHING");
 		}
     }
     

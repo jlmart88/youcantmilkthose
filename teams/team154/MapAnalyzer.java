@@ -36,7 +36,7 @@ public class MapAnalyzer {
 		
 		int mapHeight=terrainMap.length;
 		int mapWidth=terrainMap[0].length;
-		MapLocation enemyHQLocation = rc.senseEnemyHQLocation();
+		MapLocation enemyHQLocation = RobotPlayer.enemyHQLocation;
 		
 		for (int rowNum=0; rowNum<mapHeight; rowNum++){
 			//System.out.println("Row: "+rowNum+" Bytecodes: "+Clock.getBytecodesLeft()+" Round: "+Clock.getRoundNum());
@@ -50,7 +50,8 @@ public class MapAnalyzer {
 					MapLocation thisMapLocation = new MapLocation(colNum,rowNum);
 					
 					//we only want points that are closer to us than to the enemy HQ
-					if (thisMapLocation.distanceSquaredTo(enemyHQLocation)>thisMapLocation.distanceSquaredTo(hqLocation)){
+					if (thisMapLocation.distanceSquaredTo(enemyHQLocation)>thisMapLocation.distanceSquaredTo(hqLocation)
+							&&!thisMapLocation.equals(hqLocation)){
 					
 						//System.out.println("Before Cows: "+colNum+" Bytecodes: "+ Clock.getBytecodesLeft()+" Round: "+Clock.getRoundNum());
 						
@@ -103,8 +104,8 @@ public class MapAnalyzer {
 						}
 						
 						//weight these factors into a ranking:
-						int entrywayWeight = 10000;
-						int cowGrowthWeight = 1500;
+						int entrywayWeight = 12000;
+						int cowGrowthWeight = 2000;
 						int proximityWeight = 1000;
 						int attackWeight = 10000;
 						

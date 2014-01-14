@@ -2,6 +2,7 @@ package team154.movement;
 
 import java.util.ArrayList;
 
+import team154.RobotPlayer;
 import battlecode.common.GameActionException;
 import battlecode.common.GameObject;
 import battlecode.common.MapLocation;
@@ -15,10 +16,12 @@ public class VectorFunctions {
 		int challengerDist;
 		MapLocation closestLoc = null;
 		for(MapLocation m:manyLocs){
-			challengerDist = point.distanceSquaredTo(m);
-			if(challengerDist<closestDist){
-				closestDist = challengerDist;
-				closestLoc = m;
+			if (!m.equals(RobotPlayer.enemyHQLocation)){
+				challengerDist = point.distanceSquaredTo(m);
+				if(challengerDist<closestDist){
+					closestDist = challengerDist;
+					closestLoc = m;
+				}
 			}
 		}
 		return closestLoc;
@@ -42,7 +45,14 @@ public class VectorFunctions {
 	}
 	
 	public static MapLocation mldivide(MapLocation bigM, int divisor){
-		return new MapLocation(bigM.x/divisor, bigM.y/divisor);
+		MapLocation out = new MapLocation(bigM.x/divisor, bigM.y/divisor);
+		if (out.x>=RobotPlayer.width/divisor){
+			out = new MapLocation(RobotPlayer.width/divisor-1,out.y);
+		}
+		if (out.y>=RobotPlayer.height/divisor){
+			out = new MapLocation(out.x,RobotPlayer.height/divisor-1);
+		}
+		return out;
 	}
 	
 	public static MapLocation mlmultiply(MapLocation bigM, int factor){
