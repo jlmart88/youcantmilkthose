@@ -43,13 +43,14 @@ public class RobotPlayer{
                 }
                 rc.yield();
             }catch (Exception e){
-//               e.printStackTrace();
+               e.printStackTrace();
             }
         }
     }
 
-    public static boolean closeEnough(MapLocation loc1, MapLocation loc2){
-    	if(Math.abs(loc1.x - loc2.x) + Math.abs(loc1.y - loc2.y) <= 7){
+
+    public static boolean closeEnough(MapLocation loc1, MapLocation loc2, int dist){
+    	if(Math.abs(loc1.x - loc2.x) + Math.abs(loc1.y - loc2.y) <= dist){
     		return true;
     	}
     	return false;
@@ -72,7 +73,7 @@ public class RobotPlayer{
     		path = BreadthFirst.pathTo(VectorFunctions.mldivide(currentLoc,bigBoxSize), VectorFunctions.mldivide(pastrLoc,bigBoxSize), 100000);
     	}
     	//follow breadthFirst path
-    	if(!closeEnough(currentLoc,pastrLoc)){
+    	if(!closeEnough(currentLoc,pastrLoc,7)){
     		Direction bdir = BreadthFirst.getNextDirection(path, bigBoxSize);
     		BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
     	}
@@ -82,25 +83,17 @@ public class RobotPlayer{
     	}
     }
     
-    
     private static void tryToDefend() throws GameActionException{
     	
     }
     
     public static void tryToShoot() throws GameActionException{
     	Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent());
-    	boolean HQdetected = false;
+    	MapLocation HQLocation = rc.senseEnemyHQLocation();
     	if(enemyRobots.length>0){//if there are enemies
     		rc.setIndicatorString(0, "There are enemies");
     		int locationSize = enemyRobots.length;
-    		for(int i=0;i<enemyRobots.length;i++){//detects enemy HQ
-    			Robot anEnemy = enemyRobots[i];
-    			RobotInfo anEnemyInfo = rc.senseRobotInfo(anEnemy);
-    			if(anEnemyInfo.type == RobotType.HQ){
-    				HQdetected = true;
-    			}
-    		}
-    		if(locationSize != 1 || HQdetected == false){//if there are non HQ enemies
+    		if(!closeEnough(rc.getLocation(), HQLocation,4)){//if there are non HQ enemies
     			MapLocation[] robotLocations = new MapLocation[locationSize];
     			for(int i=0;i<locationSize;i++){
     				Robot anEnemy = enemyRobots[i];
@@ -114,7 +107,7 @@ public class RobotPlayer{
     			}
     			MapLocation closestEnemyLoc = VectorFunctions.findClosest(robotLocations, rc.getLocation());
     			MapLocation lowestEnemyHPLoc = VectorFunctions.findLowest(rc, enemyRobots);
-    			if(lowestEnemyHPLoc != null){
+    			if(lowestEnemyHPLoc != null){//attacks lowest HP enemy if in range
     				if(lowestEnemyHPLoc.distanceSquaredTo(rc.getLocation())<rc.getType().attackRadiusMaxSquared){
     					rc.setIndicatorString(1, "trying to shoot");
     					if(rc.isActive()){
@@ -122,30 +115,22 @@ public class RobotPlayer{
     					}
     				}
     			}
-    			else if(closestEnemyLoc.distanceSquaredTo(rc.getLocation())<rc.getType().attackRadiusMaxSquared){
+    			else if(closestEnemyLoc.distanceSquaredTo(rc.getLocation())<=rc.getType().attackRadiusMaxSquared){
     				rc.setIndicatorString(1, "trying to shoot");
     				if(rc.isActive()){
     					rc.attackSquare(closestEnemyLoc);
     				}
     			}else{
-    				rc.setIndicatorString(1, "trying to go closer");
     				Direction towardClosest = rc.getLocation().directionTo(closestEnemyLoc);
+    				rc.setIndicatorString(1, "trying to go closer to " + closestEnemyLoc);
     				simpleMove(towardClosest);
     			}
     		}
-    		else if(locationSize == 1 && HQdetected == true){//if HQ is the only enemy
+    		else {//if HQ is the only enemy
     			Direction chosenDirection = allDirections[(int)(randall.nextDouble()*8)];
     			if(rc.isActive()&&rc.canMove(chosenDirection)){
     				rc.move(chosenDirection);
     			}
-    		}
-    		else{
-    			if(path.size()==0){
-    				path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(rc.senseEnemyHQLocation(),bigBoxSize), 100000);
-    			}
-    			//follow breadthFirst path
-    			Direction bdir = BreadthFirst.getNextDirection(path, bigBoxSize);
-    			BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
     		}
     	}else if(rc.readBroadcast(20000)!=-100){
 	    	MapLocation pastrLoc = VectorFunctions.intToLoc(rc.readBroadcast(20000));
@@ -240,7 +225,7 @@ public class RobotPlayer{
 		for(int directionalOffset:directionalLooks){
 			int forwardInt = chosenDirection.ordinal();
 			Direction trialDir = allDirections[(forwardInt+directionalOffset+8)%8];
-			if(rc.canMove(trialDir)){
+			if(rc.canMove(trialDir) && rc.isActive()){
 				rc.move(trialDir);
 				break;
 			}

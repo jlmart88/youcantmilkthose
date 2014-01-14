@@ -28,7 +28,7 @@ public class Cowboy {
     				VectorFunctions.mldivide(pastrLoc,RobotPlayer.bigBoxSize), 100000);
     		}
     		//follow breadthFirst path
-    		if(!RobotPlayer.closeEnough(rc.getLocation(),pastrLoc)){
+    		if(!RobotPlayer.closeEnough(rc.getLocation(),pastrLoc,10)){
     			Direction bdir = BreadthFirst.getNextDirection(RobotPlayer.path, RobotPlayer.bigBoxSize);
     			BasicPathing.tryToMove(bdir, true, rc, RobotPlayer.directionalLooks, RobotPlayer.allDirections);
     		}
