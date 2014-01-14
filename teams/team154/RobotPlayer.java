@@ -43,7 +43,7 @@ public class RobotPlayer{
                 }
                 rc.yield();
             }catch (Exception e){
-               e.printStackTrace();
+//               e.printStackTrace();
             }
         }
     }
@@ -93,17 +93,12 @@ public class RobotPlayer{
     	if(enemyRobots.length>0){//if there are enemies
     		rc.setIndicatorString(0, "There are enemies");
     		int locationSize = enemyRobots.length;
-    		if(!closeEnough(rc.getLocation(), HQLocation,4)){//if there are non HQ enemies
+    		if(!closeEnough(rc.getLocation(), HQLocation,5)){//if there are non HQ enemies
     			MapLocation[] robotLocations = new MapLocation[locationSize];
     			for(int i=0;i<locationSize;i++){
     				Robot anEnemy = enemyRobots[i];
     				RobotInfo anEnemyInfo = rc.senseRobotInfo(anEnemy);
-    				if(anEnemyInfo.type != RobotType.HQ){
-    					robotLocations[i] = anEnemyInfo.location;
-    				}
-    				else{
-    					robotLocations[i] = new MapLocation(10000,10000);
-    				}
+    				robotLocations[i] = anEnemyInfo.location;
     			}
     			MapLocation closestEnemyLoc = VectorFunctions.findClosest(robotLocations, rc.getLocation());
     			MapLocation lowestEnemyHPLoc = VectorFunctions.findLowest(rc, enemyRobots);
@@ -127,6 +122,7 @@ public class RobotPlayer{
     			}
     		}
     		else {//if HQ is the only enemy
+    			rc.setIndicatorString(1, "NEAR HQ");
     			Direction chosenDirection = allDirections[(int)(randall.nextDouble()*8)];
     			if(rc.isActive()&&rc.canMove(chosenDirection)){
     				rc.move(chosenDirection);
