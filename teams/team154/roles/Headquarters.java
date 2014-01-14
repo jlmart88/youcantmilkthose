@@ -80,7 +80,7 @@ public class Headquarters {
 				}
 			}
 		}
-
+		rc.broadcast(20000, -100);
 		MapLocation[] enemyPastrLocations = rc.sensePastrLocations(rc.getTeam().opponent());
 		if(enemyPastrLocations.length>0){
 			MapLocation closestPastr = VectorFunctions.findClosest(enemyPastrLocations, rc.getLocation());
