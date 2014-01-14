@@ -8,6 +8,7 @@ import java.util.Random;
 import team154.movement.BasicPathing;
 import team154.movement.BreadthFirst;
 import team154.movement.VectorFunctions;
+import team154.roles.Headquarters;
 import team154.roles.RobotRoles;
 
 public class RobotPlayer{
@@ -16,16 +17,12 @@ public class RobotPlayer{
     static Direction allDirections[] = Direction.values();
     static Random randall = new Random();
     static int directionalLooks[] = new int[]{0,1,-1,2,-2,3,-3,4};
-    static boolean mapCreated = false;
 	static ArrayList<MapLocation> path;
 	static int bigBoxSize = 5;
 	static Direction[] directions = {Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
 
 	//constants for assigning roles
 	static RobotRoles myRole = null;
-	static int currentRoleChannel = 0;
-	static int lastSpawnedID = 0;
-	static boolean justSpawned = false;
     
     public static void run(RobotController rcin){
         rc = rcin;
@@ -35,7 +32,7 @@ public class RobotPlayer{
         while(true){
             try{
                 if(rc.getType()==RobotType.HQ){//if I'm a headquarters
-                    runHeadquarters(height,width);
+                    Headquarters.runHeadquarters(height,width,rc);
                 }else if(rc.getType()==RobotType.SOLDIER){
                     runSoldier(height, width);
                 }
@@ -261,6 +258,7 @@ public class RobotPlayer{
 			}
 		}
 	}
+<<<<<<< HEAD
 
 
 	private static void runHeadquarters(int height, int width) throws GameActionException {
@@ -352,4 +350,7 @@ public class RobotPlayer{
 				rc.broadcast(20000, -100);
 		}
 	}
+=======
+	
+>>>>>>> b2343e5cb337d9568c192a124a138a2ebc5b21d4
 }
