@@ -113,6 +113,7 @@ public class Headquarters {
             System.out.println("I'm here");
             MapAnalyzer.printIdealPastrLocations(map,idealPastrLocations);
             for(int x=0; x<idealPastrLocations.length; x++){
+            	System.out.println(idealPastrLocations[x]);
             	rc.broadcast(CommunicationProtocol.PASTR_LOCATION_CHANNEL_MIN+x, VectorFunctions.locToInt(idealPastrLocations[x]));
             }
         }        
@@ -151,6 +152,10 @@ public class Headquarters {
 		currentRolesDict = newRolesDict;
 		
 		//figure out what we need
+		
+		if (rolesCountDict.get(RobotRoles.CONSTRUCTOR)==0){
+			return RobotRoles.CONSTRUCTOR;
+		}
 		//Soldier or farmer-related?
 		if ((RobotRoles.SOLDIER.idealNum - rolesCountDict.get(RobotRoles.SOLDIER))>
 				((RobotRoles.COWBOY.idealNum+RobotRoles.CONSTRUCTOR.idealNum)-

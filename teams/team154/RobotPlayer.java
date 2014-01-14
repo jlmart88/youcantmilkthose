@@ -135,12 +135,14 @@ public class RobotPlayer{
     	}else if(rc.readBroadcast(20000)!=-100){
 	    	MapLocation pastrLoc = VectorFunctions.intToLoc(rc.readBroadcast(20000));
     		rc.setIndicatorString(1, "Going to attack location: " + pastrLoc);
-			if(path.size()==0){
+			if(path.size()<=1){
 				path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(pastrLoc,bigBoxSize), 100000);
 			}
 			//follow breadthFirst path
+			if(path.size()>1){
 			Direction bdir = BreadthFirst.getNextDirection(path, bigBoxSize);
 			BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
+			}
 		}else{
     		rc.setIndicatorString(1, "DOING NOTHING");
 		}
@@ -158,7 +160,7 @@ public class RobotPlayer{
 				}	
 			}
 		}
-		if(myRole.name() == "CONSTRUCTOR"){
+		else if(myRole.name() == "CONSTRUCTOR"){
 			tryToConstruct();
 		}
 		else if(myRole.name() == "COWBOY"){
@@ -169,9 +171,6 @@ public class RobotPlayer{
 		}
 		else if(myRole.name() == "DEFENDER"){
 			tryToDefend();
-		}
-		else{
-			tryToShoot();
 		}
 
         //movement
