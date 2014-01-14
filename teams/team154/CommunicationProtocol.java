@@ -25,6 +25,17 @@ public class CommunicationProtocol {
 	public static final int ROLE_CHANNELS[] = range(ROLE_CHANNEL_MIN,ROLE_CHANNEL_MAX+1);
 	public static final int ROLE_CHANNEL_NUM = ROLE_CHANNELS.length;	
 	
+	/**
+	 * pastrLocationChannels display where we should be building pastrs
+	 * 
+	 * exist on range 15000-4
+	 * format: see VectorFunctions.locToInt()
+	 */
+	public static final int PASTR_LOCATION_CHANNEL_MIN = 15000;
+	public static final int PASTR_LOCATION_CHANNEL_MAX = 15004;
+	public static final int PASTR_LOCATION_CHANNELS[] = range(PASTR_LOCATION_CHANNEL_MIN,PASTR_LOCATION_CHANNEL_MAX+1);
+	public static final int PASTR_LOCATION_CHANNEL_NUM = PASTR_LOCATION_CHANNELS.length;
+	
 	/** Takes in the data stored in a channel and returns what role the channel data is displaying
 	 * 
 	 * If the channelData is not properly formatted for displaying a role, it will default to returning
@@ -79,7 +90,7 @@ public class CommunicationProtocol {
 				Integer.toString(DEFAULT_SPACER)+Integer.toString(role.communicationID));	
 	}
 	
-	//returns an int[] array where 'begin' is inclusive, e'nd' is exclusive
+	//returns an int[] array where 'begin' is inclusive, 'end' is exclusive
 	//ex: range(3,6) ---> [3,4,5]
 	private static int[] range(int begin, int end){
 		int out[] = new int[end-begin];

@@ -82,14 +82,15 @@ public class Headquarters {
 				}
 			}
 		}
+
 		MapLocation[] enemyPastrLocations = rc.sensePastrLocations(rc.getTeam().opponent());
 		if(enemyPastrLocations.length>0){
 			MapLocation closestPastr = VectorFunctions.findClosest(enemyPastrLocations, rc.getLocation());
 			rc.broadcast(20000, VectorFunctions.locToInt(closestPastr));
 		}
 
-        char[][] map = new char[height][width];
         if(mapCreated == false){ //Create a map of the battlefield
+        	char[][] map = new char[height][width];
             for(int y=0; y<height; y++){
                 for(int x=0; x<width; x++){
                     if(rc.senseTerrainTile(new MapLocation(x,y)) == TerrainTile.NORMAL){
@@ -152,7 +153,7 @@ public class Headquarters {
 		
 		//figure out what we need
 		//Soldier or farmer-related?
-		if (((RobotRoles.SOLDIER.idealNum - rolesCountDict.get(RobotRoles.SOLDIER))/2)>
+		if ((RobotRoles.SOLDIER.idealNum - rolesCountDict.get(RobotRoles.SOLDIER))>
 				((RobotRoles.COWBOY.idealNum+RobotRoles.CONSTRUCTOR.idealNum)-
 				(rolesCountDict.get(RobotRoles.CONSTRUCTOR)+rolesCountDict.get(RobotRoles.COWBOY)))){
 			return RobotRoles.SOLDIER;

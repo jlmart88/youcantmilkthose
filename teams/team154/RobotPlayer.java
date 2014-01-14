@@ -108,7 +108,7 @@ public class RobotPlayer{
     	
     }
     
-    private static void tryToShoot() throws GameActionException{
+    public static void tryToShoot() throws GameActionException{
     	Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent());
     	MapLocation HQLocation = rc.senseEnemyHQLocation();
     	if(enemyRobots.length>0){//if there are enemies
