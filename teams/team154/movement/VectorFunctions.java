@@ -9,6 +9,7 @@ import battlecode.common.MapLocation;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
+import battlecode.common.RobotType;
 
 public class VectorFunctions {
 	public static MapLocation findClosest(MapLocation[] manyLocs, MapLocation point){
@@ -75,6 +76,28 @@ public class VectorFunctions {
 	}
 	public static MapLocation bigBoxCenter(MapLocation bigBoxLoc, int bigBoxSize){
 		return mladd(mlmultiply(bigBoxLoc,bigBoxSize),new MapLocation(bigBoxSize/2,bigBoxSize/2));
+	}
+	
+	public static MapLocation[] robotsToLocations(Robot[] robotList,RobotController rc, boolean ignoreHQ) throws GameActionException{
+		if(robotList.length==0)
+			return new MapLocation[]{};
+		ArrayList<MapLocation> robotLocs = new ArrayList<MapLocation>();
+		for(int i=0;i<robotList.length;i++){
+			Robot anEnemy = robotList[i];
+			RobotInfo anEnemyInfo = rc.senseRobotInfo(anEnemy);
+			if(!ignoreHQ||anEnemyInfo.type!=RobotType.HQ)
+				robotLocs.add(anEnemyInfo.location);
+		}
+		return robotLocs.toArray(new MapLocation[]{});
+	}
+	public static MapLocation meanLocation(MapLocation[] manyLocs){
+		if(manyLocs.length==0)
+			return null;
+		MapLocation runningTotal = new MapLocation(0,0);
+		for(MapLocation m:manyLocs){
+			runningTotal = mladd(runningTotal,m);
+		}
+		return mldivide(runningTotal,manyLocs.length);
 	}
 }
 

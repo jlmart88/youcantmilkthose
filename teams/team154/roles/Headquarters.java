@@ -87,6 +87,7 @@ public class Headquarters {
             }
             //signify that we are done broadcasting, and the locations are valid
             rc.broadcast(CommunicationProtocol.PASTR_LOCATION_FINISHED_CHANNEL, 1);
+
         }        
     }
 
