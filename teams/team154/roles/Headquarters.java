@@ -109,13 +109,14 @@ public class Headquarters {
             }
             mapCreated = true;
             
-            MapLocation[] idealPastrLocations = MapAnalyzer.findIdealPastrLocations(map,rc.senseCowGrowth(),rc.getLocation(),rc);
-            System.out.println("I'm here");
-            MapAnalyzer.printIdealPastrLocations(map,idealPastrLocations);
-            for(int x=0; x<idealPastrLocations.length; x++){
-            	System.out.println(idealPastrLocations[x]);
-            	rc.broadcast(CommunicationProtocol.PASTR_LOCATION_CHANNEL_MIN+x, VectorFunctions.locToInt(idealPastrLocations[x]));
-            }
+//            MapLocation[] idealPastrLocations = MapAnalyzer.findIdealPastrLocations(map,rc.senseCowGrowth(),rc.getLocation(),rc);
+//            System.out.println("I'm here");
+//            MapAnalyzer.printIdealPastrLocations(map,idealPastrLocations);
+//            for(int x=0; x<idealPastrLocations.length; x++){
+//            	System.out.println(idealPastrLocations[x]);
+//            	rc.broadcast(CommunicationProtocol.PASTR_LOCATION_CHANNEL_MIN+x, VectorFunctions.locToInt(idealPastrLocations[x]));
+//            }
+            rc.broadcast(CommunicationProtocol.PASTR_LOCATION_CHANNEL_MIN, VectorFunctions.locToInt(new MapLocation(21,48)));
         }        
     }
 
