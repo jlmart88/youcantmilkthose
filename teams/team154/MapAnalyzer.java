@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.lang.Math;
 
+import team154.roles.Headquarters;
 import battlecode.common.*;
 
 public class MapAnalyzer {
@@ -27,8 +28,9 @@ public class MapAnalyzer {
 	 * -numAttackLocations = number of locations surrounding point from which point can be attacked (0-36 [w/ r^2=10])
 	 *
 	 * @return MapLocation[] array of MapLocations to build a pastr
+	 * @throws GameActionException 
 	 */
-	public static MapLocation[] findIdealPastrLocations(char[][] terrainMap, double[][] cowGrowthMap, MapLocation hqLocation, RobotController rc){
+	public static MapLocation[] findIdealPastrLocations(char[][] terrainMap, double[][] cowGrowthMap, MapLocation hqLocation, RobotController rc) throws GameActionException{
 		MapLocation idealLocations[] = new MapLocation[NUM_IDEAL_PASTRS];
 		HashMap<Integer, MapLocation> rankedMap = 
 				new HashMap<Integer,MapLocation>(); //create space for a map where
@@ -127,6 +129,9 @@ public class MapAnalyzer {
 					//System.out.println("Found oob tile");
 				}
 			}
+			
+			//try to spawn after every row analysis
+			Headquarters.tryToSpawn(rc);
 		}
 		
 		//find the top pastr locations

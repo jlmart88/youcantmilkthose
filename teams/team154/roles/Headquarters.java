@@ -45,41 +45,9 @@ public class Headquarters {
 				}
 			}
 		}
-		for(Direction spawnDir:directions){
-			if(rc.isActive()&&rc.canMove(spawnDir)&&rc.senseRobotCount()<GameConstants.MAX_ROBOTS){
-				rc.spawn(spawnDir);
-				justSpawned = true;//tell the HQ to try to broadcast role information
-				break;
-			}
-		}
 		
-		if(justSpawned){//try to find our most recent spawn, and broadcast its role info
-			Robot[] nearbyRobots = rc.senseNearbyGameObjects(Robot.class, 9, rc.getTeam());
-			for (Robot spawnedRobot:nearbyRobots){
-				int spawnedID = spawnedRobot.getID();
-				if(spawnedID>lastSpawnedID){//our next spawn will have a greater id than the last spawn
-					
-					//for now, randomly choose a role
-					//RobotRoles role = RobotRoles.values()[(int)(RobotPlayer.randall.nextDouble()*10)%4];
-					
-					//assign roles based on ideal numbers in RobotRoles
-					RobotRoles role = Headquarters.getNextRole(rc, spawnedID);
-					currentRolesDict.put(spawnedID, role);
-					
-					rc.broadcast(CommunicationProtocol.ROLE_CHANNELS[currentRoleChannel], 
-								CommunicationProtocol.roleToData(spawnedRobot.getID(), role));
-					
-					justSpawned = false; //reset the trigger for broadcasting roles
-					
-					//increment/loop role channel
-					currentRoleChannel = (currentRoleChannel+1)%CommunicationProtocol.ROLE_CHANNEL_NUM; 
-					
-					lastSpawnedID=spawnedID;//track the most recent spawn
-					
-					rc.setIndicatorString(0, "Just Spawned a "+role.name()+" with ID: "+lastSpawnedID);
-				}
-			}
-		}
+		tryToSpawn(rc);
+		
 		rc.broadcast(20000, -100);
 		MapLocation[] enemyPastrLocations = rc.sensePastrLocations(rc.getTeam().opponent());
 		if(enemyPastrLocations.length>0){
@@ -109,14 +77,17 @@ public class Headquarters {
             }
             mapCreated = true;
             
-//            MapLocation[] idealPastrLocations = MapAnalyzer.findIdealPastrLocations(map,rc.senseCowGrowth(),rc.getLocation(),rc);
-//            System.out.println("I'm here");
-//            MapAnalyzer.printIdealPastrLocations(map,idealPastrLocations);
-//            for(int x=0; x<idealPastrLocations.length; x++){
-//            	System.out.println(idealPastrLocations[x]);
-//            	rc.broadcast(CommunicationProtocol.PASTR_LOCATION_CHANNEL_MIN+x, VectorFunctions.locToInt(idealPastrLocations[x]));
-//            }
-            rc.broadcast(CommunicationProtocol.PASTR_LOCATION_CHANNEL_MIN, VectorFunctions.locToInt(new MapLocation(21,48)));
+            MapLocation[] idealPastrLocations = MapAnalyzer.findIdealPastrLocations(map,rc.senseCowGrowth(),rc.getLocation(),rc);
+            System.out.println("I'm here");
+            MapAnalyzer.printIdealPastrLocations(map,idealPastrLocations);
+            //broadcast the locations
+            for(int x=0; x<idealPastrLocations.length; x++){
+            	System.out.println(idealPastrLocations[x]);
+            	rc.broadcast(CommunicationProtocol.PASTR_LOCATION_CHANNEL_MIN+x, VectorFunctions.locToInt(idealPastrLocations[x]));
+            }
+            //signify that we are done broadcasting, and the locations are valid
+            rc.broadcast(CommunicationProtocol.PASTR_LOCATION_FINISHED_CHANNEL, 1);
+
         }        
     }
 
@@ -171,5 +142,44 @@ public class Headquarters {
 				return RobotRoles.CONSTRUCTOR;
 			}
 		}
+	}
+	
+	public static void tryToSpawn(RobotController rc) throws GameActionException{
+
+		for(Direction spawnDir:directions){
+			if(rc.isActive()&&rc.canMove(spawnDir)&&rc.senseRobotCount()<GameConstants.MAX_ROBOTS){
+				rc.spawn(spawnDir);
+				justSpawned = true;//tell the HQ to try to broadcast role information
+				break;
+			}
+		}
+		if(justSpawned){//try to find our most recent spawn, and broadcast its role info
+			Robot[] nearbyRobots = rc.senseNearbyGameObjects(Robot.class, 9, rc.getTeam());
+			for (Robot spawnedRobot:nearbyRobots){
+				int spawnedID = spawnedRobot.getID();
+				if(spawnedID>lastSpawnedID){//our next spawn will have a greater id than the last spawn
+					
+					//for now, randomly choose a role
+					//RobotRoles role = RobotRoles.values()[(int)(RobotPlayer.randall.nextDouble()*10)%4];
+					
+					//assign roles based on ideal numbers in RobotRoles
+					RobotRoles role = Headquarters.getNextRole(rc, spawnedID);
+					currentRolesDict.put(spawnedID, role);
+					
+					rc.broadcast(CommunicationProtocol.ROLE_CHANNELS[currentRoleChannel], 
+								CommunicationProtocol.roleToData(spawnedRobot.getID(), role));
+					
+					justSpawned = false; //reset the trigger for broadcasting roles
+					
+					//increment/loop role channel
+					currentRoleChannel = (currentRoleChannel+1)%CommunicationProtocol.ROLE_CHANNEL_NUM; 
+					
+					lastSpawnedID=spawnedID;//track the most recent spawn
+					
+					rc.setIndicatorString(0, "Just Spawned a "+role.name()+" with ID: "+lastSpawnedID);
+				}
+			}
+		}
+		
 	}
 }

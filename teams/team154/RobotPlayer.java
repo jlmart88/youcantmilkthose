@@ -66,29 +66,32 @@ public class RobotPlayer{
     }
     
     private static void tryToConstruct() throws GameActionException{
-    	MapLocation currentLoc = rc.getLocation();
-    	MapLocation pastrLoc = VectorFunctions.intToLoc(rc.readBroadcast(CommunicationProtocol.PASTR_LOCATION_CHANNEL_MIN));
-    	rc.setIndicatorString(2, "I WILL CONSTRUCT AT " + pastrLoc);
-    	//there are no enemies, so build a tower
-    	if(rc.sensePastrLocations(rc.getTeam()).length<10){
-    		if (senseCowsAtRange(rc.getLocation()) > 3500 || currentLoc.equals(pastrLoc)){
-    			if(rc.isActive()){
-    				rc.construct(RobotType.PASTR);
+    	if (rc.readBroadcast(CommunicationProtocol.PASTR_LOCATION_FINISHED_CHANNEL)==1){
+    		int x = rc.getRobot().getID()%5;
+    		MapLocation currentLoc = rc.getLocation();
+    		MapLocation pastrLoc = VectorFunctions.intToLoc(rc.readBroadcast(CommunicationProtocol.PASTR_LOCATION_CHANNEL_MIN+x));
+    		rc.setIndicatorString(2, "I WILL CONSTRUCT AT " + pastrLoc);
+    		//there are no enemies, so build a tower
+    		if(rc.sensePastrLocations(rc.getTeam()).length<10){
+    			if (senseCowsAtRange(rc.getLocation()) > 3500 || currentLoc.equals(pastrLoc)){
+    				if(rc.isActive()){
+    					rc.construct(RobotType.PASTR);
+    				}
     			}
     		}
-    	}
-    	if(path.size()<=1&&!setInitialPath){
-    		path = BreadthFirst.pathTo(VectorFunctions.mldivide(currentLoc,bigBoxSize), VectorFunctions.mldivide(pastrLoc,bigBoxSize), 100000);
-    		setInitialPath=true;
-    	}
-    	//follow breadthFirst path
-    	if(!closeEnough(currentLoc,pastrLoc,5)&&path.size()>1){
-    		Direction bdir = BreadthFirst.getNextDirection(path, bigBoxSize);
-    		BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
-    	}
-    	else{
-			Direction towardClosest = rc.getLocation().directionTo(pastrLoc);
-			BasicPathing.tryToMove(towardClosest,true,rc,directionalLooks,allDirections);
+    		if(path.size()<=1&&!setInitialPath){
+    			path = BreadthFirst.pathTo(VectorFunctions.mldivide(currentLoc,bigBoxSize), VectorFunctions.mldivide(pastrLoc,bigBoxSize), 100000);
+    			setInitialPath=true;
+    		}
+    		//follow breadthFirst path
+    		if(!closeEnough(currentLoc,pastrLoc,5)&&path.size()>1){
+    			Direction bdir = BreadthFirst.getNextDirection(path, bigBoxSize);
+    			BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
+    		}
+    		else{
+    			Direction towardClosest = rc.getLocation().directionTo(pastrLoc);
+    			BasicPathing.tryToMove(towardClosest,true,rc,directionalLooks,allDirections);
+    		}
     	}
     }
     
@@ -115,7 +118,7 @@ public class RobotPlayer{
     		MapLocation closestEnemyLoc = VectorFunctions.findClosest(robotLocations, rc.getLocation());
     		MapLocation lowestHPEnemyLoc = VectorFunctions.findLowest(rc, enemyRobots);
 			rc.setIndicatorString(2,alliedRobots.length + " " + enemyRobots.length);
-    		if(alliedRobots.length >= enemyRobots.length){
+    		if(alliedRobots.length+1 >= enemyRobots.length){
     			if(lowestHPEnemyLoc!=null){
     				if(lowestHPEnemyLoc.distanceSquaredTo(rc.getLocation())<=rc.getType().attackRadiusMaxSquared){// attacks lowest HP enemy if in range
     					rc.setIndicatorString(1, "trying to shoot");

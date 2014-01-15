@@ -27,6 +27,7 @@ public class CommunicationProtocol {
 	
 	/**
 	 * pastrLocationChannels display where we should be building pastrs
+	 * finishedChannel is 0 when not finished, 1 when finished analyzing map
 	 * 
 	 * exist on range 15000-4
 	 * format: see VectorFunctions.locToInt()
@@ -35,6 +36,7 @@ public class CommunicationProtocol {
 	public static final int PASTR_LOCATION_CHANNEL_MAX = 15004;
 	public static final int PASTR_LOCATION_CHANNELS[] = range(PASTR_LOCATION_CHANNEL_MIN,PASTR_LOCATION_CHANNEL_MAX+1);
 	public static final int PASTR_LOCATION_CHANNEL_NUM = PASTR_LOCATION_CHANNELS.length;
+	public static final int PASTR_LOCATION_FINISHED_CHANNEL = 15005;
 	
 	/** Takes in the data stored in a channel and returns what role the channel data is displaying
 	 * 
