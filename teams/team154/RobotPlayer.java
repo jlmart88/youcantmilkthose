@@ -103,86 +103,98 @@ public class RobotPlayer{
 			BasicPathing.tryToMove(towardClosest,true,rc,directionalLooks,allDirections);
     }
     
+    private static void attackPastrs(Robot[] alliedRobots) throws GameActionException{
+		rc.setIndicatorString(0, "There are pastrs to attack");
+		rc.setIndicatorString(1, "Going to attack location: " + currentPastr);
+		MapLocation[] pastrLocs = rc.sensePastrLocations(rc.getTeam().opponent());
+		boolean inList = false;
+		
+		for (MapLocation location:pastrLocs){
+			if (location.equals(currentPastr)){
+				inList=true;
+			}
+		}
+		if (!inList){
+			MapLocation pastrLoc = VectorFunctions.intToLoc(rc.readBroadcast(20000));
+			currentPastr = pastrLoc;
+			setInitialPath = false;
+			inList = true;
+		}
+		if (inList&&!setInitialPath&&alliedRobots.length>3&&closeEnough(rc.getLocation(),enemyHQLocation,2)){
+			rc.setIndicatorString(2, "Setting path to: "+currentPastr);
+			path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(currentPastr,bigBoxSize), 100000);
+			rc.setIndicatorString(2, "Got path");
+			setInitialPath = true;
+		}
+		else if(inList&&!setInitialPath&&!closeEnough(rc.getLocation(),enemyHQLocation,2)){
+			rc.setIndicatorString(2, "Setting path to: "+currentPastr);
+			path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(currentPastr,bigBoxSize), 100000);
+			rc.setIndicatorString(2, "Got path");
+			setInitialPath = true;
+//			MapLocation[] alliedRobotLocations = VectorFunctions.robotsToLocations(alliedRobots, rc, true);
+//			rc.setIndicatorString(2, "Moving towards cluster");
+//			MapLocation toCluster = VectorFunctions.meanLocation(alliedRobotLocations);
+//			if(toCluster != null)
+//				BasicPathing.tryToMove(rc.getLocation().directionTo(toCluster), true, rc, directionalLooks, allDirections);
+		}
+		if(path.size()<=1&&setInitialPath){
+			BasicPathing.tryToMove(rc.getLocation().directionTo(currentPastr),true, rc, directionalLooks, allDirections);
+		}
+		//follow breadthFirst path
+		else if(path.size()>1){
+			Direction bdir = BreadthFirst.getNextDirection(path, bigBoxSize);
+			BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
+			
+		}
+    }
     public static void tryToShoot() throws GameActionException{
     	Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent());
     	Robot[] alliedRobots = rc.senseNearbyGameObjects(Robot.class,35,rc.getTeam());
     	if(enemyRobots.length>0){//if there are enemies
-    		rc.setIndicatorString(0, "There are enemies");
-    		int locationSize = enemyRobots.length;
-    		MapLocation[] robotLocations = new MapLocation[locationSize];
-    		for(int i=0;i<locationSize;i++){
-    			Robot anEnemy = enemyRobots[i];
-    			RobotInfo anEnemyInfo = rc.senseRobotInfo(anEnemy);
-    			robotLocations[i] = anEnemyInfo.location;
-    		}
-    		MapLocation closestEnemyLoc = VectorFunctions.findClosest(robotLocations, rc.getLocation());
-    		MapLocation lowestHPEnemyLoc = VectorFunctions.findLowest(rc, enemyRobots);
-			rc.setIndicatorString(2,alliedRobots.length + " " + enemyRobots.length);
-    		if(alliedRobots.length+1 >= enemyRobots.length){
-    			if(lowestHPEnemyLoc!=null){
-    				if(lowestHPEnemyLoc.distanceSquaredTo(rc.getLocation())<=rc.getType().attackRadiusMaxSquared){// attacks lowest HP enemy if in range
-    					rc.setIndicatorString(1, "trying to shoot");
-    					if(rc.isActive()){
-    						rc.attackSquare(lowestHPEnemyLoc);
+    		if(!(enemyRobots.length==1 && rc.senseRobotInfo(enemyRobots[0]).type == RobotType.HQ)){
+    			rc.setIndicatorString(0, "There are enemies");
+    			int locationSize = enemyRobots.length;
+    			MapLocation[] robotLocations = new MapLocation[locationSize];
+    			for(int i=0;i<locationSize;i++){
+    				Robot anEnemy = enemyRobots[i];
+    				RobotInfo anEnemyInfo = rc.senseRobotInfo(anEnemy);
+    				robotLocations[i] = anEnemyInfo.location;
+    			}
+    			MapLocation closestEnemyLoc = VectorFunctions.findClosest(robotLocations, rc.getLocation());
+    			MapLocation lowestHPEnemyLoc = VectorFunctions.findLowest(rc, enemyRobots);
+    			rc.setIndicatorString(2,alliedRobots.length + " " + enemyRobots.length);
+    			if(alliedRobots.length+1 >= enemyRobots.length){
+    				if(lowestHPEnemyLoc!=null){
+    					if(lowestHPEnemyLoc.distanceSquaredTo(rc.getLocation())<=rc.getType().attackRadiusMaxSquared && lowestHPEnemyLoc!=enemyHQLocation){// attacks lowest HP enemy if in range
+    						rc.setIndicatorString(1, "trying to shoot");
+    						if(rc.isActive()){
+    							rc.attackSquare(lowestHPEnemyLoc);
+    						}
+    					}
+    				}
+    				if(closestEnemyLoc!=null){
+    					if(closestEnemyLoc.distanceSquaredTo(rc.getLocation())<=rc.getType().attackRadiusMaxSquared && closestEnemyLoc!=enemyHQLocation){// attacks the closest enemy if in range
+    						rc.setIndicatorString(1, "trying to shoot");
+    						if(rc.isActive()){
+    							rc.attackSquare(closestEnemyLoc);
+    						}
+    					}
+    					else{
+    						moveTowards(closestEnemyLoc);
     					}
     				}
     			}
-    			if(closestEnemyLoc!=null){
-    				if(closestEnemyLoc.distanceSquaredTo(rc.getLocation())<=rc.getType().attackRadiusMaxSquared){// attacks the closest enemy if in range
-    					rc.setIndicatorString(1, "trying to shoot");
-    					if(rc.isActive()){
-    						rc.attackSquare(closestEnemyLoc);
-    					}
-    				}
-    				else{
-    					moveTowards(closestEnemyLoc);
-    				}
+    			else{
+    				rc.setIndicatorString(1, "Retreating");
+    				BasicPathing.tryToMove(rc.getLocation().directionTo(closestEnemyLoc).opposite(),true,rc,directionalLooks,allDirections);
     			}
     		}
     		else{
-    			rc.setIndicatorString(1, "Retreating");
-				BasicPathing.tryToMove(rc.getLocation().directionTo(closestEnemyLoc).opposite(),true,rc,directionalLooks,allDirections);
-			}
+    			attackPastrs(alliedRobots);
+    		}
     	}
-    	else if(rc.readBroadcast(20000)!=-100){
-    		rc.setIndicatorString(0, "There are pastrs to attack");
-    		rc.setIndicatorString(1, "Going to attack location: " + currentPastr);
-    		MapLocation[] pastrLocs = rc.sensePastrLocations(rc.getTeam().opponent());
-    		boolean inList = false;
-    		
-			for (MapLocation location:pastrLocs){
-				if (location.equals(currentPastr)){
-					inList=true;
-				}
-			}
-			if (!inList){
-				MapLocation pastrLoc = VectorFunctions.intToLoc(rc.readBroadcast(20000));
-				currentPastr = pastrLoc;
-				setInitialPath = false;
-				inList = true;
-			}
-			if (inList&&!setInitialPath&&alliedRobots.length>3){
-				rc.setIndicatorString(2, "Setting path to: "+currentPastr);
-				path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(currentPastr,bigBoxSize), 100000);
-    			rc.setIndicatorString(2, "Got path");
-				setInitialPath = true;
-			}
-			else if(inList&&!setInitialPath&&alliedRobots.length<=3){
-				MapLocation[] alliedRobotLocations = VectorFunctions.robotsToLocations(alliedRobots, rc, true);
-				rc.setIndicatorString(2, "Moving towards cluster");
-				MapLocation toCluster = VectorFunctions.meanLocation(alliedRobotLocations);
-				if(toCluster != null)
-					BasicPathing.tryToMove(rc.getLocation().directionTo(toCluster), true, rc, directionalLooks, allDirections);
-			}
-			if(path.size()<=1&&setInitialPath){
-				BasicPathing.tryToMove(rc.getLocation().directionTo(currentPastr),true, rc, directionalLooks, allDirections);
-    		}
-    		//follow breadthFirst path
-			else if(path.size()>1){
-    			Direction bdir = BreadthFirst.getNextDirection(path, bigBoxSize);
-    			BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
-    			
-    		}
+    else if(rc.readBroadcast(20000)!=-100){
+    	attackPastrs(alliedRobots);
     	}else if (rc.sensePastrLocations(rc.getTeam()).length>0){
     		rc.setIndicatorString(0, "There are pastrs to defend");
     		MapLocation[] pastrLocs = rc.sensePastrLocations(rc.getTeam());
