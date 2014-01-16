@@ -65,6 +65,8 @@ public class MapAnalyzer {
 						//determine the distance to the HQ
 						int proximityToHQ = hqLocation.distanceSquaredTo(thisMapLocation);
 						
+						//determine the distance to enemy HQ
+						int proximityToEnemyHQ = enemyHQLocation.distanceSquaredTo(thisMapLocation);
 						//System.out.println("Before Locations: "+colNum+" Bytecodes: "+ Clock.getBytecodesLeft()+" Round: "+Clock.getRoundNum());
 						
 						//determine the number of locations from which the location can be attacked
@@ -117,6 +119,7 @@ public class MapAnalyzer {
 								entrywayWeight/(numEntryways+1)
 								+cowGrowthWeight*cowGrowthRate
 								+proximityWeight/(proximityToHQ+1)*(proximityToHQ+1))
+								+proximityWeight*(proximityToEnemyHQ+1)
 								//attackWeight/(numAttackLocations+1))
 								,thisMapLocation);
 						
