@@ -40,10 +40,10 @@ public class MapAnalyzer {
 		int mapWidth=terrainMap[0].length;
 		MapLocation enemyHQLocation = RobotPlayer.enemyHQLocation;
 		
-		for (int rowNum=0; rowNum<mapHeight; rowNum++){
+		for (int rowNum=0; rowNum<mapHeight; rowNum=rowNum+2){ //trying out optimization where we look at every other row
 			//System.out.println("Row: "+rowNum+" Bytecodes: "+Clock.getBytecodesLeft()+" Round: "+Clock.getRoundNum());
-			//rc.breakpoint();
-			for (int colNum=0; colNum<mapWidth; colNum++){
+			//rc.breakpoint()
+			for (int colNum=0; colNum<mapWidth; colNum=colNum+2){ //trying out optimization where we look at every other column
 				//System.out.println("Col: "+colNum+" Bytecodes: "+ Clock.getBytecodesLeft()+" Round: "+Clock.getRoundNum());
 				//rc.breakpoint();
 				

@@ -47,7 +47,6 @@ public class RobotPlayer{
                 if(rc.getType()==RobotType.HQ){//if I'm a headquarters
                     Headquarters.runHeadquarters(height,width,rc);
                 }else if(rc.getType()==RobotType.SOLDIER){
-                	rc.setIndicatorString(1, "");
                     runSoldier(height, width);
                 }
                 rc.yield();
@@ -162,26 +161,25 @@ public class RobotPlayer{
     			}
     			MapLocation closestEnemyLoc = VectorFunctions.findClosest(robotLocations, rc.getLocation());
     			MapLocation lowestHPEnemyLoc = VectorFunctions.findLowest(rc, enemyRobots);
-    			rc.setIndicatorString(2,alliedRobots.length + " " + enemyRobots.length);
+    			rc.setIndicatorString(2,"Our robots #: "+alliedRobots.length + " Enemy robots #:" + enemyRobots.length);
     			if(alliedRobots.length+1 >= enemyRobots.length){
     				if(lowestHPEnemyLoc!=null){
     					if(lowestHPEnemyLoc.distanceSquaredTo(rc.getLocation())<=rc.getType().attackRadiusMaxSquared && lowestHPEnemyLoc!=enemyHQLocation){// attacks lowest HP enemy if in range
-    						rc.setIndicatorString(1, "trying to shoot");
+    						rc.setIndicatorString(1, "trying to shoot lowest");
     						if(rc.isActive()){
     							rc.attackSquare(lowestHPEnemyLoc);
     						}
     					}
-    				}
-    				if(closestEnemyLoc!=null){
+    				}else if(closestEnemyLoc!=null){
     					if(closestEnemyLoc.distanceSquaredTo(rc.getLocation())<=rc.getType().attackRadiusMaxSquared && closestEnemyLoc!=enemyHQLocation){// attacks the closest enemy if in range
-    						rc.setIndicatorString(1, "trying to shoot");
+    						rc.setIndicatorString(1, "trying to shoot closest");
     						if(rc.isActive()){
     							rc.attackSquare(closestEnemyLoc);
     						}
     					}
-    					else{
-    						moveTowards(closestEnemyLoc);
-    					}
+    					
+    				}else{
+						moveTowards(closestEnemyLoc);
     				}
     			}
     			else{
