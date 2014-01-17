@@ -109,16 +109,30 @@ public class Soldier {
     					}
     				}
     			}
+    			else if(closestEnemyLoc!=null){
+    				if(RobotPlayer.closeEnough(closestEnemyLoc, rc.getLocation(), rc.getType().attackRadiusMaxSquared)){//if closest enemy is within attack range
+    					rc.setIndicatorString(1, "Retreating");
+    					BasicPathing.tryToMove(rc.getLocation().directionTo(closestEnemyLoc).opposite(),true,rc,directionalLooks,allDirections);
+    				}
+    				else{//regroup with allies
+    					MapLocation[] alliedRobotLocations = VectorFunctions.robotsToLocations(enemyRobots, rc,false);
+    					MapLocation alliedRobotCenter = VectorFunctions.meanLocation(alliedRobotLocations);
+    					Direction towardAllies = rc.getLocation().directionTo(alliedRobotCenter);
+    					BasicPathing.tryToMove(towardAllies, true, rc, directionalLooks, allDirections);
+    				}
+    			}
     			else{
-    				rc.setIndicatorString(1, "Retreating");
-    				BasicPathing.tryToMove(rc.getLocation().directionTo(closestEnemyLoc).opposite(),true,rc,directionalLooks,allDirections);
+					MapLocation[] alliedRobotLocations = VectorFunctions.robotsToLocations(enemyRobots, rc,false);
+					MapLocation alliedRobotCenter = VectorFunctions.meanLocation(alliedRobotLocations);
+					Direction towardAllies = rc.getLocation().directionTo(alliedRobotCenter);
+					BasicPathing.tryToMove(towardAllies, true, rc, directionalLooks, allDirections);
     			}
     		}
     		else{
     			attackPastrs(rc,alliedRobots);
     		}
     	}
-    else if(rc.readBroadcast(20000)!=-100){
+    else if(rc.readBroadcast(20000)!=-100 && !RobotPlayer.closeEnough(VectorFunctions.intToLoc(rc.readBroadcast(20000)), RobotPlayer.enemyHQLocation, 3)){
     	attackPastrs(rc,alliedRobots);
     	}
     else if (rc.sensePastrLocations(rc.getTeam()).length>0){
