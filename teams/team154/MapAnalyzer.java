@@ -65,6 +65,8 @@ public class MapAnalyzer {
 						//determine the distance to the HQ
 						int proximityToHQ = hqLocation.distanceSquaredTo(thisMapLocation);
 						
+						//determine the distance to enemy HQ
+						int proximityToEnemyHQ = enemyHQLocation.distanceSquaredTo(thisMapLocation);
 						//System.out.println("Before Locations: "+colNum+" Bytecodes: "+ Clock.getBytecodesLeft()+" Round: "+Clock.getRoundNum());
 						
 						//determine the number of locations from which the location can be attacked
@@ -106,20 +108,24 @@ public class MapAnalyzer {
 						}
 						
 						//weight these factors into a ranking:
-						int entrywayWeight = 12000;
-						int cowGrowthWeight = 2000;
+						int entrywayWeight = 8000;
+						int cowGrowthWeight = 5000;
 						int proximityWeight = 5000;
 						int attackWeight = 10000;
 						
 						//System.out.println("Before Rank: "+colNum+" Bytecodes: "+ Clock.getBytecodesLeft()+" Round: "+Clock.getRoundNum());
-						
+						if(cowGrowthRate==0){
+							rankedMap.put(0,thisMapLocation);
+						}
+						else{
 						rankedMap.put((int) (
 								entrywayWeight/(numEntryways+1)
 								+cowGrowthWeight*cowGrowthRate
 								+proximityWeight/(proximityToHQ+1)*(proximityToHQ+1))
+								+proximityWeight*(proximityToEnemyHQ+1)
 								//attackWeight/(numAttackLocations+1))
 								,thisMapLocation);
-						
+						}
 						//System.out.println("After rank: "+colNum+" Bytecodes: "+ Clock.getBytecodesLeft()+" Round: "+Clock.getRoundNum());
 						
 						
