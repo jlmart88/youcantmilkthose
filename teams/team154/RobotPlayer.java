@@ -169,27 +169,27 @@ public class RobotPlayer{
     }
 
     
-//	private static void simpleMove(Direction chosenDirection) throws GameActionException{
-//		for(int directionalOffset:directionalLooks){
-//			int forwardInt = chosenDirection.ordinal();
-//			Direction trialDir = allDirections[(forwardInt+directionalOffset+8)%8];
-//			if(rc.canMove(trialDir) && rc.isActive()){
-//				rc.setIndicatorString(1,"MOVING TO" + trialDir);
-//				rc.move(trialDir);
-//				break;
-//			}
-//		}
-//	}
+	public static void simpleMove(Direction chosenDirection) throws GameActionException{
+		for(int directionalOffset:directionalLooks){
+			int forwardInt = chosenDirection.ordinal();
+			Direction trialDir = allDirections[(forwardInt+directionalOffset+8)%8];
+			if(rc.canMove(trialDir) && rc.isActive()){
+				rc.setIndicatorString(1,"MOVING TO" + trialDir);
+				rc.move(trialDir);
+				break;
+			}
+		}
+	}
 //	
-//	private static void simpleMoveAgainst(Direction chosenDirection) throws GameActionException{
-//		for(int directionalOffset:directionalLooks){
-//			int forwardInt = chosenDirection.ordinal();
-//			Direction trialDir = allDirections[(forwardInt+directionalOffset+12)%8];
-//			if(rc.canMove(trialDir) && rc.isActive()){
-//				rc.move(trialDir);
-//				break;
-//			}
-//		}
-//	}
+	public static void simpleMoveAgainst(Direction chosenDirection) throws GameActionException{
+		for(int directionalOffset:directionalLooks){
+			int forwardInt = chosenDirection.ordinal();
+			Direction trialDir = allDirections[(forwardInt+directionalOffset+12)%8];
+			if(rc.canMove(trialDir) && rc.isActive()){
+				rc.move(trialDir);
+				break;
+			}
+		}
+	}
 
 }
