@@ -45,5 +45,24 @@ public class BasicPathing{
 			//System.out.println("I am at "+rc.getLocation()+", trail "+snailTrail.get(0)+snailTrail.get(1)+snailTrail.get(2));
 		}
 	}
+	public static void tryToSneak(Direction chosenDirection,boolean selfAvoiding,RobotController rc, int[] directionalLooks, Direction[] allDirections) throws GameActionException{
+		while(snailTrail.size()<20)
+			snailTrail.add(new MapLocation(-1,-1));
+		if(rc.isActive()){
+			snailTrail.remove(0);
+			snailTrail.add(rc.getLocation());
+			for(int directionalOffset:directionalLooks){
+				int forwardInt = chosenDirection.ordinal();
+				Direction trialDir = allDirections[(forwardInt+directionalOffset+8)%8];
+				if(canMove(trialDir,selfAvoiding,rc)){
+					rc.sneak(trialDir);
+					//snailTrail.remove(0);
+					//snailTrail.add(rc.getLocation());
+					break;
+				}
+			}
+			//System.out.println("I am at "+rc.getLocation()+", trail "+snailTrail.get(0)+snailTrail.get(1)+snailTrail.get(2));
+		}
+	}
 	
 }

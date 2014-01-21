@@ -87,6 +87,9 @@ public class Soldier {
     			}
     			MapLocation closestEnemyLoc = VectorFunctions.findClosest(robotLocations, rc.getLocation());
     			MapLocation lowestHPEnemyLoc = VectorFunctions.findLowest(rc, enemyRobots);
+//    			if(lowestHPEnemyLoc!=null){
+//    				rc.setIndicatorString(2, "LOCATION: " + lowestHPEnemyLoc);
+//    			}
     			rc.setIndicatorString(2,"Our robots #: "+alliedRobots.length + " Enemy robots #:" + enemyRobots.length);
     			if(alliedRobots.length+1 >= enemyRobots.length){
     				if(lowestHPEnemyLoc!=null){
@@ -96,6 +99,20 @@ public class Soldier {
     							rc.attackSquare(lowestHPEnemyLoc);
     						}
     					}
+        				else if(closestEnemyLoc!=null){
+        					if(closestEnemyLoc.distanceSquaredTo(rc.getLocation())<=rc.getType().attackRadiusMaxSquared && closestEnemyLoc!=RobotPlayer.enemyHQLocation){// attacks the closest enemy if in range
+        						rc.setIndicatorString(1, "trying to shoot closest");
+        						if(rc.isActive()){
+        							rc.attackSquare(closestEnemyLoc);
+        						}
+        					}
+        					else{
+        						moveTowards(rc,closestEnemyLoc);
+        					}
+        				}
+        				else{
+    						moveTowards(rc,closestEnemyLoc);
+    					}
     				}
     				else if(closestEnemyLoc!=null){
     					if(closestEnemyLoc.distanceSquaredTo(rc.getLocation())<=rc.getType().attackRadiusMaxSquared && closestEnemyLoc!=RobotPlayer.enemyHQLocation){// attacks the closest enemy if in range
@@ -103,6 +120,9 @@ public class Soldier {
     						if(rc.isActive()){
     							rc.attackSquare(closestEnemyLoc);
     						}
+    					}
+    					else{
+    						moveTowards(rc,closestEnemyLoc);
     					}
     				}
     				else{

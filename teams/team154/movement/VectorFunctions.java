@@ -34,7 +34,7 @@ public class VectorFunctions {
 		for(Robot m:enemyRobots){
 			RobotInfo info = rc.senseRobotInfo(m);
 			challengerHP = info.health;
-			if(lowestHP<challengerHP){
+			if(challengerHP<lowestHP){
 				lowestHP = challengerHP;
 				lowestLoc = info.location;
 			}

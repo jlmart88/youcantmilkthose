@@ -90,7 +90,7 @@ public class RobotPlayer{
     		}
     		else{
     			Direction towardClosest = rc.getLocation().directionTo(pastrLoc);
-    			BasicPathing.tryToMove(towardClosest,true,rc,directionalLooks,allDirections);
+    			BasicPathing.tryToSneak(towardClosest,true,rc,directionalLooks,allDirections);
     		}
     	}
     }
@@ -111,7 +111,7 @@ public class RobotPlayer{
 			tryToConstruct();
 		}
 		else if(myRole.name() == "COWBOY"){
-			Cowboy.tryToGather(rc);
+			Soldier.tryToShoot(rc);
 		}
 		else if(myRole.name() == "SOLDIER"){
 			Soldier.tryToShoot(rc);
