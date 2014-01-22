@@ -125,7 +125,10 @@ public class Headquarters {
 
 		//figure out what we need
 
-		if (rolesCountDict.get(RobotRoles.CONSTRUCTOR)==0){
+		if(RobotPlayer.height + RobotPlayer.width <= 100){
+			return RobotRoles.SOLDIER;
+		}
+		else if (rolesCountDict.get(RobotRoles.CONSTRUCTOR)==0){
 			return RobotRoles.CONSTRUCTOR;
 		}
 		else if(rc.sensePastrLocations(rc.getTeam()).length==1 && rolesCountDict.get(RobotRoles.CONSTRUCTOR)==1){

@@ -72,7 +72,7 @@ public class Soldier {
 		}
     }
 
-    public static void combat(RobotController rc, Robot[] enemyRobots, Robot[] alliedRobots) throws GameActionException{
+    public static void combat(RobotController rc, Robot[] enemyRobots, Robot[] alliedRobots, boolean defend) throws GameActionException{
     	if(!(enemyRobots.length==1 && rc.senseRobotInfo(enemyRobots[0]).type == RobotType.HQ)){// if the enemy isn't a HQ
 			rc.setIndicatorString(0, "There are enemies");
 			int locationSize = enemyRobots.length;
@@ -103,11 +103,11 @@ public class Soldier {
     							rc.attackSquare(closestEnemyLoc);
     						}
     					}
-    					else{
+    					else if(!defend){
     						moveTowards(rc,closestEnemyLoc);
     					}
     				}
-    				else{
+    				else if(!defend){
 						moveTowards(rc,closestEnemyLoc);
 					}
 				}
@@ -118,11 +118,11 @@ public class Soldier {
 							rc.attackSquare(closestEnemyLoc);
 						}
 					}
-					else{
+					else if(!defend){
 						moveTowards(rc,closestEnemyLoc);
 					}
 				}
-				else{
+				else if(!defend){
 					moveTowards(rc,closestEnemyLoc);
 				}
 			}
@@ -152,7 +152,7 @@ public class Soldier {
     	Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent());
     	Robot[] alliedRobots = rc.senseNearbyGameObjects(Robot.class,35,rc.getTeam());
     	if(enemyRobots.length>0){//if there are enemies
-    		combat(rc, enemyRobots, alliedRobots);
+    		combat(rc, enemyRobots, alliedRobots, false);
     	}
     	else if(rc.readBroadcast(20000)!=-100 && !RobotPlayer.closeEnough(VectorFunctions.intToLoc(rc.readBroadcast(20000)), RobotPlayer.enemyHQLocation, 3)){
     		attackPastrs(rc,alliedRobots);
@@ -209,7 +209,17 @@ public class Soldier {
     	int pastrNum = rc.sensePastrLocations(rc.getTeam()).length;
     	int pastrNumOpp = rc.sensePastrLocations(rc.getTeam().opponent()).length;
     	if(enemyRobots.length>0){//if there are enemies
-    		combat(rc, enemyRobots, alliedRobots);
+    		if(rc.senseRobotInfo(enemyRobots[0]).type != RobotType.HQ){
+    			rc.broadcast(12000, VectorFunctions.locToInt(rc.senseRobotInfo(enemyRobots[0]).location));
+    			rc.broadcast(12001, 0);
+    		}
+    		combat(rc, enemyRobots, alliedRobots, false);
+    		if(enemyRobots.length==0){
+    			rc.broadcast(12001, -100);
+    		}
+    	}
+    	else if(rc.readBroadcast(12000)!=0 && rc.readBroadcast(12001)!=-100){
+    		BasicPathing.tryToMove(rc.getLocation().directionTo(VectorFunctions.intToLoc(rc.readBroadcast(12000))), true, rc, directionalLooks, allDirections);
     	}
     	else if(pastrNumOpp > pastrNum){
     		attackPastrs(rc,alliedRobots);
@@ -231,6 +241,10 @@ public class Soldier {
 				BasicPathing.tryToMove(rc.getLocation().directionTo(pastrLoc),true, rc, directionalLooks, allDirections);
     		}
     		//follow breadthFirst path
+    		else if(RobotPlayer.path.size()>1 && RobotPlayer.closeEnough(rc.getLocation(), pastrLoc, 5)){
+    			Direction bdir = BreadthFirst.getNextDirection(RobotPlayer.path, bigBoxSize);
+    			BasicPathing.tryToSneak(bdir, true, rc, directionalLooks, allDirections);
+    		}
 			else if(RobotPlayer.path.size()>1){
     			Direction bdir = BreadthFirst.getNextDirection(RobotPlayer.path, bigBoxSize);
     			BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
