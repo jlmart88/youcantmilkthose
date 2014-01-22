@@ -1,5 +1,6 @@
 package team154.roles;
 
+import team154.CommunicationProtocol;
 import team154.RobotPlayer;
 import team154.movement.BasicPathing;
 import team154.movement.BreadthFirst;
@@ -71,49 +72,30 @@ public class Soldier {
 		}
     }
 
-	
-    public static void tryToShoot(RobotController rc) throws GameActionException{
-    	Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent());
-    	Robot[] alliedRobots = rc.senseNearbyGameObjects(Robot.class,35,rc.getTeam());
-    	if(enemyRobots.length>0){//if there are enemies
-    		if(!(enemyRobots.length==1 && rc.senseRobotInfo(enemyRobots[0]).type == RobotType.HQ)){// if the enemy isn't a HQ
-    			rc.setIndicatorString(0, "There are enemies");
-    			int locationSize = enemyRobots.length;
-    			MapLocation[] robotLocations = new MapLocation[locationSize];
-    			for(int i=0;i<locationSize;i++){
-    				Robot anEnemy = enemyRobots[i];
-    				RobotInfo anEnemyInfo = rc.senseRobotInfo(anEnemy);
-    				robotLocations[i] = anEnemyInfo.location;
-    			}
-    			MapLocation closestEnemyLoc = VectorFunctions.findClosest(robotLocations, rc.getLocation());
-    			MapLocation lowestHPEnemyLoc = VectorFunctions.findLowest(rc, enemyRobots);
-//    			if(lowestHPEnemyLoc!=null){
-//    				rc.setIndicatorString(2, "LOCATION: " + lowestHPEnemyLoc);
-//    			}
-    			rc.setIndicatorString(2,"Our robots #: "+alliedRobots.length + " Enemy robots #:" + enemyRobots.length);
-    			if(alliedRobots.length+1 >= enemyRobots.length){
-    				if(lowestHPEnemyLoc!=null){
-    					if(lowestHPEnemyLoc.distanceSquaredTo(rc.getLocation())<=rc.getType().attackRadiusMaxSquared && lowestHPEnemyLoc!=RobotPlayer.enemyHQLocation){// attacks lowest HP enemy if in range
-    						rc.setIndicatorString(1, "trying to shoot lowest");
-    						if(rc.isActive()){
-    							rc.attackSquare(lowestHPEnemyLoc);
-    						}
-    					}
-        				else if(closestEnemyLoc!=null){
-        					if(closestEnemyLoc.distanceSquaredTo(rc.getLocation())<=rc.getType().attackRadiusMaxSquared && closestEnemyLoc!=RobotPlayer.enemyHQLocation){// attacks the closest enemy if in range
-        						rc.setIndicatorString(1, "trying to shoot closest");
-        						if(rc.isActive()){
-        							rc.attackSquare(closestEnemyLoc);
-        						}
-        					}
-        					else{
-        						moveTowards(rc,closestEnemyLoc);
-        					}
-        				}
-        				else{
-    						moveTowards(rc,closestEnemyLoc);
-    					}
-    				}
+    public static void combat(RobotController rc, Robot[] enemyRobots, Robot[] alliedRobots) throws GameActionException{
+    	if(!(enemyRobots.length==1 && rc.senseRobotInfo(enemyRobots[0]).type == RobotType.HQ)){// if the enemy isn't a HQ
+			rc.setIndicatorString(0, "There are enemies");
+			int locationSize = enemyRobots.length;
+			MapLocation[] robotLocations = new MapLocation[locationSize];
+			for(int i=0;i<locationSize;i++){
+				Robot anEnemy = enemyRobots[i];
+				RobotInfo anEnemyInfo = rc.senseRobotInfo(anEnemy);
+				robotLocations[i] = anEnemyInfo.location;
+			}
+			MapLocation closestEnemyLoc = VectorFunctions.findClosest(robotLocations, rc.getLocation());
+			MapLocation lowestHPEnemyLoc = VectorFunctions.findLowest(rc, enemyRobots);
+//			if(lowestHPEnemyLoc!=null){
+//				rc.setIndicatorString(2, "LOCATION: " + lowestHPEnemyLoc);
+//			}
+			rc.setIndicatorString(2,"Our robots #: "+alliedRobots.length + " Enemy robots #:" + enemyRobots.length);
+			if(alliedRobots.length+1 >= enemyRobots.length){
+				if(lowestHPEnemyLoc!=null){
+					if(lowestHPEnemyLoc.distanceSquaredTo(rc.getLocation())<=rc.getType().attackRadiusMaxSquared && lowestHPEnemyLoc!=RobotPlayer.enemyHQLocation){// attacks lowest HP enemy if in range
+						rc.setIndicatorString(1, "trying to shoot lowest");
+						if(rc.isActive()){
+							rc.attackSquare(lowestHPEnemyLoc);
+						}
+					}
     				else if(closestEnemyLoc!=null){
     					if(closestEnemyLoc.distanceSquaredTo(rc.getLocation())<=rc.getType().attackRadiusMaxSquared && closestEnemyLoc!=RobotPlayer.enemyHQLocation){// attacks the closest enemy if in range
     						rc.setIndicatorString(1, "trying to shoot closest");
@@ -128,45 +110,67 @@ public class Soldier {
     				else{
 						moveTowards(rc,closestEnemyLoc);
 					}
-    			}
-    			else if(closestEnemyLoc!=null){
-    				if(RobotPlayer.closeEnough(closestEnemyLoc, rc.getLocation(), rc.getType().attackRadiusMaxSquared)){//if closest enemy is within attack range
-    					rc.setIndicatorString(1, "Retreating");
-    					RobotPlayer.simpleMoveAgainst(rc.getLocation().directionTo(closestEnemyLoc));
-//    					BasicPathing.tryToMove(rc.getLocation().directionTo(closestEnemyLoc).opposite(),true,rc,directionalLooks,allDirections);
-    				}
-    				else{//regroup with allies
-    					MapLocation[] alliedRobotLocations = VectorFunctions.robotsToLocations(enemyRobots, rc,false);
-    					MapLocation alliedRobotCenter = VectorFunctions.meanLocation(alliedRobotLocations);
-    					Direction towardAllies = rc.getLocation().directionTo(alliedRobotCenter);
-    					BasicPathing.tryToMove(towardAllies, true, rc, directionalLooks, allDirections);
-    				}
-    			}
-    			else{
+				}
+				else if(closestEnemyLoc!=null){
+					if(closestEnemyLoc.distanceSquaredTo(rc.getLocation())<=rc.getType().attackRadiusMaxSquared && closestEnemyLoc!=RobotPlayer.enemyHQLocation){// attacks the closest enemy if in range
+						rc.setIndicatorString(1, "trying to shoot closest");
+						if(rc.isActive()){
+							rc.attackSquare(closestEnemyLoc);
+						}
+					}
+					else{
+						moveTowards(rc,closestEnemyLoc);
+					}
+				}
+				else{
+					moveTowards(rc,closestEnemyLoc);
+				}
+			}
+			else if(closestEnemyLoc!=null){
+				if(RobotPlayer.closeEnough(closestEnemyLoc, rc.getLocation(), rc.getType().attackRadiusMaxSquared)){//if closest enemy is within attack range
+					rc.setIndicatorString(1, "Retreating");
+					RobotPlayer.simpleMoveAgainst(rc.getLocation().directionTo(closestEnemyLoc));
+//					BasicPathing.tryToMove(rc.getLocation().directionTo(closestEnemyLoc).opposite(),true,rc,directionalLooks,allDirections);
+				}
+				else{//regroup with allies
 					MapLocation[] alliedRobotLocations = VectorFunctions.robotsToLocations(enemyRobots, rc,false);
 					MapLocation alliedRobotCenter = VectorFunctions.meanLocation(alliedRobotLocations);
 					Direction towardAllies = rc.getLocation().directionTo(alliedRobotCenter);
 					BasicPathing.tryToMove(towardAllies, true, rc, directionalLooks, allDirections);
-    			}
-    		}
-    		else{
-    			attackPastrs(rc,alliedRobots);
-    		}
+				}
+			}
+			else{
+				MapLocation[] alliedRobotLocations = VectorFunctions.robotsToLocations(enemyRobots, rc,false);
+				MapLocation alliedRobotCenter = VectorFunctions.meanLocation(alliedRobotLocations);
+				Direction towardAllies = rc.getLocation().directionTo(alliedRobotCenter);
+				BasicPathing.tryToMove(towardAllies, true, rc, directionalLooks, allDirections);
+			}
+		}
+    }
+	
+    public static void tryToShoot(RobotController rc) throws GameActionException{
+    	Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent());
+    	Robot[] alliedRobots = rc.senseNearbyGameObjects(Robot.class,35,rc.getTeam());
+    	if(enemyRobots.length>0){//if there are enemies
+    		combat(rc, enemyRobots, alliedRobots);
     	}
-    else if(rc.readBroadcast(20000)!=-100 && !RobotPlayer.closeEnough(VectorFunctions.intToLoc(rc.readBroadcast(20000)), RobotPlayer.enemyHQLocation, 3)){
-    	attackPastrs(rc,alliedRobots);
+    	else if(rc.readBroadcast(20000)!=-100 && !RobotPlayer.closeEnough(VectorFunctions.intToLoc(rc.readBroadcast(20000)), RobotPlayer.enemyHQLocation, 3)){
+    		attackPastrs(rc,alliedRobots);
     	}
-    else if (rc.sensePastrLocations(rc.getTeam()).length>0){
+    	else if (rc.sensePastrLocations(rc.getTeam()).length>0){ //move to defend pastrs
     		rc.setIndicatorString(0, "There are pastrs to defend");
     		MapLocation[] pastrLocs = rc.sensePastrLocations(rc.getTeam());
     		//choose one of our pastrs and move toward it
     		int x = rc.getRobot().getID()%pastrLocs.length;
     		MapLocation pastrLoc = pastrLocs[x];
-    		if (!RobotPlayer.setInitialPath){
+    		if(rc.getLocation().isAdjacentTo(pastrLoc)){
+    			rc.yield();
+    		}
+    		else if (!RobotPlayer.setInitialPath){
     			RobotPlayer.path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(pastrLoc,bigBoxSize), 100000);
     			RobotPlayer.setInitialPath = true;
 			}
-    		if(RobotPlayer.path.size()<=1&&RobotPlayer.setInitialPath){
+    		else if(RobotPlayer.path.size()<=1&&RobotPlayer.setInitialPath){
 				BasicPathing.tryToMove(rc.getLocation().directionTo(pastrLoc),true, rc, directionalLooks, allDirections);
     		}
     		//follow breadthFirst path
@@ -175,27 +179,84 @@ public class Soldier {
     			BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
 			}
     	}
-    else if (rc.readBroadcast(15000)!=0){
-    	MapLocation prePastrLoc = VectorFunctions.intToLoc(rc.readBroadcast(15000));
-		if (!RobotPlayer.setInitialPath){
-			RobotPlayer.path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(prePastrLoc,bigBoxSize), 100000);
-			RobotPlayer.setInitialPath = true;
-		}
-		if(RobotPlayer.path.size()<=1&&RobotPlayer.setInitialPath){
-			BasicPathing.tryToMove(rc.getLocation().directionTo(prePastrLoc),true, rc, directionalLooks, allDirections);
-		}
-		//follow breadthFirst path
-		else if(RobotPlayer.path.size()>1){
-			Direction bdir = BreadthFirst.getNextDirection(RobotPlayer.path, bigBoxSize);
-			BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
-		}
-    }
-    else{
-    	rc.setIndicatorString(0, "DOING NOTHING");
-    	Direction d = allDirections[(int)(RobotPlayer.randall.nextDouble()*8)];
-    	if(rc.isActive()&&rc.canMove(d)){
-    		rc.move(d);
+    	else if (rc.readBroadcast(15000)!=0){
+    		MapLocation prePastrLoc = VectorFunctions.intToLoc(rc.readBroadcast(15000));
+    		if (!RobotPlayer.setInitialPath){
+    			RobotPlayer.path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(prePastrLoc,bigBoxSize), 100000);
+    			RobotPlayer.setInitialPath = true;
+    		}
+    		if(RobotPlayer.path.size()<=1&&RobotPlayer.setInitialPath){
+    			BasicPathing.tryToMove(rc.getLocation().directionTo(prePastrLoc),true, rc, directionalLooks, allDirections);
+    		}
+    		//follow breadthFirst path
+    		else if(RobotPlayer.path.size()>1){
+    			Direction bdir = BreadthFirst.getNextDirection(RobotPlayer.path, bigBoxSize);
+    			BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
+    		}
+    	}
+    	else{
+    		rc.setIndicatorString(0, "DOING NOTHING");
+    		Direction d = allDirections[(int)(RobotPlayer.randall.nextDouble()*8)];
+    		if(rc.isActive()&&rc.canMove(d)){
+    			rc.move(d);
+    		}
     	}
     }
-    } 
+    
+    public static void tryToDefend(RobotController rc) throws GameActionException{
+    	Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent());
+    	Robot[] alliedRobots = rc.senseNearbyGameObjects(Robot.class,35,rc.getTeam());
+    	int pastrNum = rc.sensePastrLocations(rc.getTeam()).length;
+    	int pastrNumOpp = rc.sensePastrLocations(rc.getTeam().opponent()).length;
+    	if(enemyRobots.length>0){//if there are enemies
+    		combat(rc, enemyRobots, alliedRobots);
+    	}
+    	else if(pastrNumOpp > pastrNum){
+    		attackPastrs(rc,alliedRobots);
+    	}
+    	else if (rc.sensePastrLocations(rc.getTeam()).length>0){ //move to defend pastrs
+    		rc.setIndicatorString(0, "There are pastrs to defend");
+    		MapLocation[] pastrLocs = rc.sensePastrLocations(rc.getTeam());
+    		//choose one of our pastrs and move toward it
+    		int x = rc.getRobot().getID()%pastrLocs.length;
+    		MapLocation pastrLoc = pastrLocs[x];
+    		if(rc.getLocation().isAdjacentTo(pastrLoc)){
+    			rc.yield();
+    		}
+    		else if (!RobotPlayer.setInitialPath){
+    			RobotPlayer.path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(pastrLoc,bigBoxSize), 100000);
+    			RobotPlayer.setInitialPath = true;
+			}
+    		else if(RobotPlayer.path.size()<=1&&RobotPlayer.setInitialPath){
+				BasicPathing.tryToMove(rc.getLocation().directionTo(pastrLoc),true, rc, directionalLooks, allDirections);
+    		}
+    		//follow breadthFirst path
+			else if(RobotPlayer.path.size()>1){
+    			Direction bdir = BreadthFirst.getNextDirection(RobotPlayer.path, bigBoxSize);
+    			BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
+			}
+    	}
+        else if(rc.readBroadcast(CommunicationProtocol.PASTR_LOCATION_FINISHED_CHANNEL)==1){
+    		MapLocation pastrLoc = VectorFunctions.intToLoc(rc.readBroadcast(CommunicationProtocol.PASTR_LOCATION_CHANNEL_MIN));
+    		if (!RobotPlayer.setInitialPath){
+    			RobotPlayer.path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(pastrLoc,bigBoxSize), 100000);
+    			RobotPlayer.setInitialPath = true;
+			}
+    		else if(RobotPlayer.path.size()<=1&&RobotPlayer.setInitialPath){
+				BasicPathing.tryToMove(rc.getLocation().directionTo(pastrLoc),true, rc, directionalLooks, allDirections);
+    		}
+    		//follow breadthFirst path
+			else if(RobotPlayer.path.size()>1){
+    			Direction bdir = BreadthFirst.getNextDirection(RobotPlayer.path, bigBoxSize);
+    			BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
+			}
+        }
+        else{
+        	rc.setIndicatorString(0, "DOING NOTHING");
+        	Direction d = allDirections[(int)(RobotPlayer.randall.nextDouble()*8)];
+        	if(rc.isActive()&&rc.canMove(d)){
+        		rc.move(d);
+        	}
+        }
+    }
 }

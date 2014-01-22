@@ -122,28 +122,29 @@ public class Headquarters {
 		//		(rolesCountDict.get(RobotRoles.CONSTRUCTOR)+rolesCountDict.get(RobotRoles.COWBOY)));
 
 		currentRolesDict = newRolesDict;
-		
+
 		//figure out what we need
-		
+
 		if (rolesCountDict.get(RobotRoles.CONSTRUCTOR)==0){
 			return RobotRoles.CONSTRUCTOR;
 		}
-		//Soldier or farmer-related?
-		if ((RobotRoles.SOLDIER.idealNum - rolesCountDict.get(RobotRoles.SOLDIER))>
-				((RobotRoles.COWBOY.idealNum+RobotRoles.CONSTRUCTOR.idealNum)-
-				(rolesCountDict.get(RobotRoles.CONSTRUCTOR)+rolesCountDict.get(RobotRoles.COWBOY)))){
-			return RobotRoles.SOLDIER;
-		}else{
-			//constructor or cowboy?
-			if ((RobotRoles.COWBOY.idealNum - rolesCountDict.get(RobotRoles.COWBOY))>
-					(RobotRoles.CONSTRUCTOR.idealNum - rolesCountDict.get(RobotRoles.CONSTRUCTOR))){
-				return RobotRoles.COWBOY;
-			}else {
-				return RobotRoles.CONSTRUCTOR;
-			}
+		else if(rc.sensePastrLocations(rc.getTeam()).length==1 && rolesCountDict.get(RobotRoles.CONSTRUCTOR)==1){
+			return RobotRoles.CONSTRUCTOR;
 		}
+		else if(rc.sensePastrLocations(rc.getTeam().opponent()).length>0){
+			return RobotRoles.SOLDIER;
+		}
+		else{
+			return RobotRoles.DEFENDER;
+		}
+		//Soldier or farmer-related?
+//		if (rolesCountDict.get(RobotRoles.SOLDIER) < 4*rolesCountDict.get(RobotRoles.CONSTRUCTOR)){
+//			return RobotRoles.SOLDIER;
+//		}else{
+//			return RobotRoles.CONSTRUCTOR;
+//		}
 	}
-	
+
 	public static void tryToSpawn(RobotController rc) throws GameActionException{
 
 		for(Direction spawnDir:directions){

@@ -23,6 +23,8 @@ public class RobotPlayer{
 	public static int bigBoxSize = 5;
 	public static int height;
 	public static int width;
+	public static int MAX_NOISE_DIST = 17;
+	public static int DIAG_NOISE_DIST = (int)(MAX_NOISE_DIST/1.414);
 	public static MapLocation enemyHQLocation;
 	public static MapLocation currentPastr;
 	public static boolean setInitialPath = false;
@@ -49,6 +51,8 @@ public class RobotPlayer{
                     Headquarters.runHeadquarters(height,width,rc);
                 }else if(rc.getType()==RobotType.SOLDIER){
                     runSoldier(height, width);
+                }else if(rc.getType()==RobotType.NOISETOWER){
+                	runTower();
                 }
                 rc.yield();
             }catch (Exception e){
@@ -65,9 +69,9 @@ public class RobotPlayer{
     	return false;
     }
     
-    private static void tryToConstruct() throws GameActionException{
+    private static void tryToConstructPastr() throws GameActionException{
     	if (rc.readBroadcast(CommunicationProtocol.PASTR_LOCATION_FINISHED_CHANNEL)==1){
-    		int x = rc.getRobot().getID()%5;
+    		int x = rc.getRobot().getID()%3;
     		MapLocation currentLoc = rc.getLocation();
     		MapLocation pastrLoc = VectorFunctions.intToLoc(rc.readBroadcast(CommunicationProtocol.PASTR_LOCATION_CHANNEL_MIN+x));
     		rc.setIndicatorString(2, "I WILL CONSTRUCT AT " + pastrLoc);
@@ -95,6 +99,115 @@ public class RobotPlayer{
     	}
     }
     
+    private static void tryToConstructTower(MapLocation[] ourPastrs) throws GameActionException{
+    	MapLocation targetPastr = ourPastrs[0];
+		MapLocation currentLoc = rc.getLocation();
+    	rc.setIndicatorString(2, "I WILL CONSTRUCT TOWER AT " + targetPastr);
+    	if(rc.isActive() && currentLoc.isAdjacentTo(targetPastr)){
+    		rc.construct(RobotType.NOISETOWER);
+    	}
+		if(path.size()<=1&&!setInitialPath){
+			path = BreadthFirst.pathTo(VectorFunctions.mldivide(currentLoc,bigBoxSize), VectorFunctions.mldivide(targetPastr,bigBoxSize), 100000);
+			setInitialPath=true;
+		}
+		//follow breadthFirst path
+			Direction towardClosest = rc.getLocation().directionTo(targetPastr);
+			BasicPathing.tryToMove(towardClosest,true,rc,directionalLooks,allDirections);
+    }
+
+    private static void runTower() throws GameActionException{
+    	MapLocation thisLoc = rc.getLocation();
+    	MapLocation eastLoc = thisLoc.add(MAX_NOISE_DIST,0);
+    	MapLocation SELoc = thisLoc.add(DIAG_NOISE_DIST,DIAG_NOISE_DIST);
+    	MapLocation southLoc = thisLoc.add(0,MAX_NOISE_DIST);
+    	MapLocation SWLoc = thisLoc.add(-DIAG_NOISE_DIST,DIAG_NOISE_DIST);
+    	MapLocation westLoc = thisLoc.add(-MAX_NOISE_DIST,0);
+    	MapLocation NWLoc = thisLoc.add(-DIAG_NOISE_DIST,-DIAG_NOISE_DIST);
+    	MapLocation northLoc = thisLoc.add(0,-MAX_NOISE_DIST);
+    	MapLocation NELoc = thisLoc.add(DIAG_NOISE_DIST,-DIAG_NOISE_DIST);
+
+    	while(!thisLoc.isAdjacentTo(eastLoc)){
+    		while(eastLoc.x > width){
+    			eastLoc=eastLoc.subtract(Direction.EAST);
+    		}
+    		if(rc.isActive()){
+    			eastLoc = eastLoc.subtract(Direction.EAST);
+    			rc.attackSquare(eastLoc);
+    		}
+    	}
+    	
+    	while(!thisLoc.isAdjacentTo(SELoc)){
+    		while(SELoc.x > width || SELoc.y > height){
+    			SELoc=SELoc.subtract(Direction.SOUTH_EAST);
+    		}
+    		if(rc.isActive()){
+    			SELoc = SELoc.subtract(Direction.SOUTH_EAST);
+    			rc.attackSquare(SELoc);
+    		}
+    	}
+    	
+    	while(!thisLoc.isAdjacentTo(southLoc)){
+    		while(southLoc.y > height){
+    			southLoc=southLoc.subtract(Direction.SOUTH);
+    		}
+    		if(rc.isActive()){
+    			southLoc = southLoc.subtract(Direction.SOUTH);
+    			rc.attackSquare(southLoc);
+    		}
+    	}
+    	
+    	while(!thisLoc.isAdjacentTo(SWLoc)){
+    		while(SWLoc.x < 0 || SWLoc.y > height){
+    			SWLoc=SWLoc.subtract(Direction.SOUTH_WEST);
+    		}
+    		if(rc.isActive()){
+    			SWLoc = SWLoc.subtract(Direction.SOUTH_WEST);
+    			rc.attackSquare(SWLoc);
+    		}
+    	}
+
+    	while(!thisLoc.isAdjacentTo(westLoc)){
+    		while(westLoc.x < 0){
+    			westLoc=westLoc.subtract(Direction.WEST);
+    		}
+    		if(rc.isActive()){
+    			westLoc = westLoc.subtract(Direction.WEST);
+    			rc.attackSquare(westLoc);
+    		}
+    	}
+    	
+    	while(!thisLoc.isAdjacentTo(NWLoc)){
+    		while(NWLoc.x < 0 || NWLoc.y < 0){
+    			NWLoc=NWLoc.subtract(Direction.NORTH_WEST);
+    		}
+    		if(rc.isActive()){
+    			NWLoc = NWLoc.subtract(Direction.NORTH_WEST);
+    			rc.attackSquare(NWLoc);
+    		}
+    	}
+    	
+    	while(!thisLoc.isAdjacentTo(northLoc)){
+    		while(northLoc.y < 0){
+    			northLoc=northLoc.subtract(Direction.NORTH);
+    		}
+    		if(rc.isActive()){
+    			northLoc = northLoc.subtract(Direction.NORTH);
+    			rc.attackSquare(northLoc);
+    		}
+    	}
+    	
+    	while(!thisLoc.isAdjacentTo(NELoc)){
+    		while(NELoc.x > width || NELoc.y < 0){
+    			NELoc=NELoc.subtract(Direction.NORTH_EAST);
+    		}
+    		if(rc.isActive()){
+    			NELoc = NELoc.subtract(Direction.NORTH_EAST);
+    			rc.attackSquare(NELoc);
+    		}
+    	}
+
+    }
+    
     private static void runSoldier(int height, int width) throws GameActionException {
     	
 		//if we dont have a role, sift through the roleChannels to try to find one
@@ -108,7 +221,11 @@ public class RobotPlayer{
 			}
 		}
 		else if(myRole.name() == "CONSTRUCTOR"){
-			tryToConstruct();
+			MapLocation[] ourPastrs = rc.sensePastrLocations(rc.getTeam());
+	    	if(ourPastrs.length > 0){
+	    		tryToConstructTower(ourPastrs);
+	    	}
+			tryToConstructPastr();
 		}
 		else if(myRole.name() == "COWBOY"){
 			Soldier.tryToShoot(rc);
@@ -117,6 +234,7 @@ public class RobotPlayer{
 			Soldier.tryToShoot(rc);
 		}
 		else if(myRole.name() == "DEFENDER"){
+			Soldier.tryToDefend(rc);
 		}
 
         //movement

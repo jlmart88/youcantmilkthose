@@ -17,7 +17,7 @@ public class MapAnalyzer {
 	public static final char VOID_TILE = '#';
 	public static final char OFF_MAP_TILE = '^';
 	public static final char ROAD_TILE = '=';
-	public static final int NUM_IDEAL_PASTRS = 5;
+	public static final int NUM_IDEAL_PASTRS = 3;
 	
 	/** Returns NUM_IDEAL_PASTRS number of locations where building a pastr is ideal
 	 * 
@@ -108,8 +108,8 @@ public class MapAnalyzer {
 						}
 						
 						//weight these factors into a ranking:
-						int entrywayWeight = 8000;
-						int cowGrowthWeight = 5000;
+						int entrywayWeight =  5000;
+						int cowGrowthWeight = 8000;
 						int proximityWeight = 5000;
 						int attackWeight = 10000;
 						
@@ -121,8 +121,8 @@ public class MapAnalyzer {
 						rankedMap.put((int) (
 								entrywayWeight/(numEntryways+1)
 								+cowGrowthWeight*cowGrowthRate
-								+proximityWeight/(proximityToHQ+1)*(proximityToHQ+1))
-								+proximityWeight*(proximityToEnemyHQ+1)
+								+proximityWeight/((proximityToHQ+1)*(proximityToHQ+1))
+								+proximityWeight*(proximityToEnemyHQ+1))
 								//attackWeight/(numAttackLocations+1))
 								,thisMapLocation);
 						}
