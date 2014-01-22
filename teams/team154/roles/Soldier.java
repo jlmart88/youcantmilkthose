@@ -44,13 +44,11 @@ public class Soldier {
 			RobotPlayer.setInitialPath = false;
 			inList = true;
 		}
-		if (inList&&!RobotPlayer.setInitialPath&&alliedRobots.length>3&&RobotPlayer.closeEnough(rc.getLocation(),RobotPlayer.enemyHQLocation,2)){
-			rc.setIndicatorString(2, "Setting path to: "+RobotPlayer.currentPastr);
-			RobotPlayer.path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(RobotPlayer.currentPastr,bigBoxSize), 100000);
-			rc.setIndicatorString(2, "Got path");
-			RobotPlayer.setInitialPath = true;
+		if (inList&&!RobotPlayer.setInitialPath&&RobotPlayer.closeEnough(RobotPlayer.currentPastr,RobotPlayer.enemyHQLocation,2)){ // if closest pastr is near their HQ
+			rc.broadcast(14000, 100); // switch to build tactic
 		}
-		else if(inList&&!RobotPlayer.setInitialPath&&!RobotPlayer.closeEnough(rc.getLocation(),RobotPlayer.enemyHQLocation,2)){
+		else if(inList&&!RobotPlayer.setInitialPath&&!RobotPlayer.closeEnough(RobotPlayer.currentPastr,RobotPlayer.enemyHQLocation,2)){
+			rc.broadcast(14000,0);
 			rc.setIndicatorString(2, "Setting path to: "+RobotPlayer.currentPastr);
 			RobotPlayer.path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(RobotPlayer.currentPastr,bigBoxSize), 100000);
 			rc.setIndicatorString(2, "Got path");
@@ -218,11 +216,12 @@ public class Soldier {
     			rc.broadcast(12001, -100);
     		}
     	}
-    	else if(rc.readBroadcast(12000)!=0 && rc.readBroadcast(12001)!=-100){
-    		BasicPathing.tryToMove(rc.getLocation().directionTo(VectorFunctions.intToLoc(rc.readBroadcast(12000))), true, rc, directionalLooks, allDirections);
-    	}
     	else if(pastrNumOpp > pastrNum){
     		attackPastrs(rc,alliedRobots);
+    	}
+    	else if(rc.readBroadcast(12000)!=0 && rc.readBroadcast(12001)!=-100){
+    		rc.setIndicatorString(1, "Attacking robots");
+    		BasicPathing.tryToMove(rc.getLocation().directionTo(VectorFunctions.intToLoc(rc.readBroadcast(12000))), true, rc, directionalLooks, allDirections);
     	}
     	else if (rc.sensePastrLocations(rc.getTeam()).length>0){ //move to defend pastrs
     		rc.setIndicatorString(0, "There are pastrs to defend");

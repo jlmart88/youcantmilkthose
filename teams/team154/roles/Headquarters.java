@@ -7,6 +7,7 @@ import team154.CommunicationProtocol;
 import team154.MapAnalyzer;
 import team154.RobotPlayer;
 import team154.movement.VectorFunctions;
+import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
@@ -92,7 +93,7 @@ public class Headquarters {
     }
 
 
-	private static RobotRoles getNextRole(RobotController rc, int spawnedID) {
+	private static RobotRoles getNextRole(RobotController rc, int spawnedID) throws GameActionException {
 		Robot[] ourRobots= rc.senseNearbyGameObjects(Robot.class, 10000, rc.getTeam());
 		
 		//update the roles dict
@@ -125,10 +126,26 @@ public class Headquarters {
 
 		//figure out what we need
 
-		if(RobotPlayer.height + RobotPlayer.width <= 100){
+		if((RobotPlayer.height + RobotPlayer.width <= 100 && Clock.getRoundNum() > 1000 && rc.senseTeamMilkQuantity(rc.getTeam()) < rc.senseTeamMilkQuantity(rc.getTeam().opponent()))
+				|| rc.readBroadcast(14000)==100){// if losing after round 1000 or if closest enemy pastr is in their base
+			//use building tactic
+			if (rolesCountDict.get(RobotRoles.CONSTRUCTOR)==0){
+				return RobotRoles.CONSTRUCTOR;
+			}
+			else if(rc.sensePastrLocations(rc.getTeam()).length==1 && rolesCountDict.get(RobotRoles.CONSTRUCTOR)==1){
+				return RobotRoles.CONSTRUCTOR;
+			}
+			else if(rc.sensePastrLocations(rc.getTeam().opponent()).length>0){
+				return RobotRoles.SOLDIER;
+			}
+			else{
+				return RobotRoles.DEFENDER;
+			}
+		}
+		else if(RobotPlayer.height + RobotPlayer.width < 100){// if on small map, use soldier tactic
 			return RobotRoles.SOLDIER;
 		}
-		else if (rolesCountDict.get(RobotRoles.CONSTRUCTOR)==0){
+		else if (rolesCountDict.get(RobotRoles.CONSTRUCTOR)==0){// else use building tactic
 			return RobotRoles.CONSTRUCTOR;
 		}
 		else if(rc.sensePastrLocations(rc.getTeam()).length==1 && rolesCountDict.get(RobotRoles.CONSTRUCTOR)==1){
