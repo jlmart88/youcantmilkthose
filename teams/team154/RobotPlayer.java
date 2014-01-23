@@ -28,6 +28,7 @@ public class RobotPlayer{
 	public static MapLocation enemyHQLocation;
 	public static MapLocation currentPastr;
 	public static boolean setInitialPath = false;
+    public static MapLocation HQLocation;
 
 	
 	//constants for assigning roles
@@ -38,9 +39,10 @@ public class RobotPlayer{
         randall.setSeed(rc.getRobot().getID());
         height = rc.getMapHeight();
         width = rc.getMapWidth();
+        HQLocation = rc.senseHQLocation();
         enemyHQLocation = rc.senseEnemyHQLocation();
         currentPastr = rc.getLocation();
-        if(rc.getType()!=RobotType.HQ){
+        if(rc.getType()!=RobotType.HQ && rc.getType()!=RobotType.NOISETOWER && rc.getType()!=RobotType.PASTR){
         	BreadthFirst.init(rc,  bigBoxSize);
         	MapLocation goal = rc.getLocation();
 			path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(goal,bigBoxSize), 100000);
@@ -116,6 +118,7 @@ public class RobotPlayer{
     }
 
     private static void runTower() throws GameActionException{
+    	
     	MapLocation thisLoc = rc.getLocation();
     	MapLocation eastLoc = thisLoc.add(MAX_NOISE_DIST,0);
     	MapLocation SELoc = thisLoc.add(DIAG_NOISE_DIST,DIAG_NOISE_DIST);
@@ -126,6 +129,7 @@ public class RobotPlayer{
     	MapLocation northLoc = thisLoc.add(0,-MAX_NOISE_DIST);
     	MapLocation NELoc = thisLoc.add(DIAG_NOISE_DIST,-DIAG_NOISE_DIST);
 
+    	rc.attackSquare(thisLoc.add(Direction.EAST));
     	while(!thisLoc.isAdjacentTo(eastLoc)){
     		while(eastLoc.x > width){
     			eastLoc=eastLoc.subtract(Direction.EAST);
@@ -135,7 +139,6 @@ public class RobotPlayer{
     			rc.attackSquare(eastLoc);
     		}
     	}
-    	
     	while(!thisLoc.isAdjacentTo(SELoc)){
     		while(SELoc.x > width || SELoc.y > height){
     			SELoc=SELoc.subtract(Direction.SOUTH_EAST);
@@ -145,7 +148,6 @@ public class RobotPlayer{
     			rc.attackSquare(SELoc);
     		}
     	}
-    	
     	while(!thisLoc.isAdjacentTo(southLoc)){
     		while(southLoc.y > height){
     			southLoc=southLoc.subtract(Direction.SOUTH);

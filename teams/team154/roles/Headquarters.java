@@ -54,7 +54,11 @@ public class Headquarters {
 		if(enemyPastrLocations.length>0){
 			MapLocation closestPastr = VectorFunctions.findClosest(enemyPastrLocations, rc.getLocation());
 			rc.broadcast(20000, VectorFunctions.locToInt(closestPastr));
+			if(RobotPlayer.closeEnough(closestPastr, RobotPlayer.enemyHQLocation, 2)){
+				rc.broadcast(20005, 1);
+			}
 		}
+		
 
         if(mapCreated == false){ //Create a map of the battlefield
         	char[][] map = new char[height][width];
@@ -127,7 +131,7 @@ public class Headquarters {
 		//figure out what we need
 
 		if((RobotPlayer.height + RobotPlayer.width <= 100 && Clock.getRoundNum() > 1000 && rc.senseTeamMilkQuantity(rc.getTeam()) < rc.senseTeamMilkQuantity(rc.getTeam().opponent()))
-				|| rc.readBroadcast(14000)==100){// if losing after round 1000 or if closest enemy pastr is in their base
+				|| rc.readBroadcast(20005)==1){// if losing after round 1000 or if closest enemy pastr is in their base
 			//use building tactic
 			if (rolesCountDict.get(RobotRoles.CONSTRUCTOR)==0){
 				return RobotRoles.CONSTRUCTOR;

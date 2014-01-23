@@ -5,6 +5,7 @@ import team154.RobotPlayer;
 import team154.movement.BasicPathing;
 import team154.movement.BreadthFirst;
 import team154.movement.VectorFunctions;
+import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
@@ -44,9 +45,6 @@ public class Soldier {
 			RobotPlayer.setInitialPath = false;
 			inList = true;
 		}
-		if (inList&&!RobotPlayer.setInitialPath&&RobotPlayer.closeEnough(RobotPlayer.currentPastr,RobotPlayer.enemyHQLocation,2)){ // if closest pastr is near their HQ
-			rc.broadcast(14000, 100); // switch to build tactic
-		}
 		else if(inList&&!RobotPlayer.setInitialPath&&!RobotPlayer.closeEnough(RobotPlayer.currentPastr,RobotPlayer.enemyHQLocation,2)){
 			rc.broadcast(14000,0);
 			rc.setIndicatorString(2, "Setting path to: "+RobotPlayer.currentPastr);
@@ -67,6 +65,33 @@ public class Soldier {
 			Direction bdir = BreadthFirst.getNextDirection(RobotPlayer.path, bigBoxSize);
 			BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
 			
+		}
+    }
+    
+    public static void defendPastrs(RobotController rc) throws GameActionException{
+		rc.setIndicatorString(0, "There are pastrs to defend");
+		MapLocation[] pastrLocs = rc.sensePastrLocations(rc.getTeam());
+		//choose one of our pastrs and move toward it
+		int x = rc.getRobot().getID()%pastrLocs.length;
+		MapLocation pastrLoc = pastrLocs[x];
+		if(rc.getLocation().isAdjacentTo(pastrLoc)){
+			rc.yield();
+		}
+		else if (!RobotPlayer.setInitialPath){
+			RobotPlayer.path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(pastrLoc,bigBoxSize), 100000);
+			RobotPlayer.setInitialPath = true;
+		}
+		else if(RobotPlayer.path.size()<=1&&RobotPlayer.setInitialPath){
+			BasicPathing.tryToMove(rc.getLocation().directionTo(pastrLoc),true, rc, directionalLooks, allDirections);
+		}
+		//follow breadthFirst path
+		else if(RobotPlayer.path.size()>1 && RobotPlayer.closeEnough(rc.getLocation(), pastrLoc, 5)){
+			Direction bdir = BreadthFirst.getNextDirection(RobotPlayer.path, bigBoxSize);
+			BasicPathing.tryToSneak(bdir, true, rc, directionalLooks, allDirections);
+		}
+		else if(RobotPlayer.path.size()>1){
+			Direction bdir = BreadthFirst.getNextDirection(RobotPlayer.path, bigBoxSize);
+			BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
 		}
     }
 
@@ -101,11 +126,11 @@ public class Soldier {
     							rc.attackSquare(closestEnemyLoc);
     						}
     					}
-    					else if(!defend){
+    					else{
     						moveTowards(rc,closestEnemyLoc);
     					}
     				}
-    				else if(!defend){
+    				else{
 						moveTowards(rc,closestEnemyLoc);
 					}
 				}
@@ -156,47 +181,20 @@ public class Soldier {
     		attackPastrs(rc,alliedRobots);
     	}
     	else if (rc.sensePastrLocations(rc.getTeam()).length>0){ //move to defend pastrs
-    		rc.setIndicatorString(0, "There are pastrs to defend");
-    		MapLocation[] pastrLocs = rc.sensePastrLocations(rc.getTeam());
-    		//choose one of our pastrs and move toward it
-    		int x = rc.getRobot().getID()%pastrLocs.length;
-    		MapLocation pastrLoc = pastrLocs[x];
-    		if(rc.getLocation().isAdjacentTo(pastrLoc)){
-    			rc.yield();
-    		}
-    		else if (!RobotPlayer.setInitialPath){
-    			RobotPlayer.path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(pastrLoc,bigBoxSize), 100000);
-    			RobotPlayer.setInitialPath = true;
-			}
-    		else if(RobotPlayer.path.size()<=1&&RobotPlayer.setInitialPath){
-				BasicPathing.tryToMove(rc.getLocation().directionTo(pastrLoc),true, rc, directionalLooks, allDirections);
-    		}
-    		//follow breadthFirst path
-			else if(RobotPlayer.path.size()>1){
-    			Direction bdir = BreadthFirst.getNextDirection(RobotPlayer.path, bigBoxSize);
-    			BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
-			}
+    		defendPastrs(rc);
     	}
-    	else if (rc.readBroadcast(15000)!=0){
-    		MapLocation prePastrLoc = VectorFunctions.intToLoc(rc.readBroadcast(15000));
+    	else {
     		if (!RobotPlayer.setInitialPath){
-    			RobotPlayer.path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(prePastrLoc,bigBoxSize), 100000);
+    			RobotPlayer.path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(RobotPlayer.HQLocation,bigBoxSize), 100000);
     			RobotPlayer.setInitialPath = true;
     		}
     		if(RobotPlayer.path.size()<=1&&RobotPlayer.setInitialPath){
-    			BasicPathing.tryToMove(rc.getLocation().directionTo(prePastrLoc),true, rc, directionalLooks, allDirections);
+    			BasicPathing.tryToMove(rc.getLocation().directionTo(RobotPlayer.HQLocation),true, rc, directionalLooks, allDirections);
     		}
     		//follow breadthFirst path
     		else if(RobotPlayer.path.size()>1){
     			Direction bdir = BreadthFirst.getNextDirection(RobotPlayer.path, bigBoxSize);
     			BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
-    		}
-    	}
-    	else{
-    		rc.setIndicatorString(0, "DOING NOTHING");
-    		Direction d = allDirections[(int)(RobotPlayer.randall.nextDouble()*8)];
-    		if(rc.isActive()&&rc.canMove(d)){
-    			rc.move(d);
     		}
     	}
     }
@@ -217,38 +215,15 @@ public class Soldier {
     			rc.broadcast(12001, -100);
     		}
     	}
+    	else if(pastrNumOpp > pastrNum || (pastrNumOpp > 0 && Clock.getRoundNum() > 600 && rc.senseTeamMilkQuantity(rc.getTeam()) < rc.senseTeamMilkQuantity(rc.getTeam().opponent()))){
+    		attackPastrs(rc,alliedRobots);
+    	}
     	else if(rc.readBroadcast(12000)!=0 && rc.readBroadcast(12001)!=-100){
     		rc.setIndicatorString(1, "Attacking robots");
     		BasicPathing.tryToMove(rc.getLocation().directionTo(VectorFunctions.intToLoc(rc.readBroadcast(12000))), true, rc, directionalLooks, allDirections);
     	}
-    	else if(pastrNumOpp > pastrNum){
-    		attackPastrs(rc,alliedRobots);
-    	}
     	else if (rc.sensePastrLocations(rc.getTeam()).length>0){ //move to defend pastrs
-    		rc.setIndicatorString(0, "There are pastrs to defend");
-    		MapLocation[] pastrLocs = rc.sensePastrLocations(rc.getTeam());
-    		//choose one of our pastrs and move toward it
-    		int x = rc.getRobot().getID()%pastrLocs.length;
-    		MapLocation pastrLoc = pastrLocs[x];
-    		if(rc.getLocation().isAdjacentTo(pastrLoc)){
-    			rc.yield();
-    		}
-    		else if (!RobotPlayer.setInitialPath){
-    			RobotPlayer.path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(pastrLoc,bigBoxSize), 100000);
-    			RobotPlayer.setInitialPath = true;
-			}
-    		else if(RobotPlayer.path.size()<=1&&RobotPlayer.setInitialPath){
-				BasicPathing.tryToMove(rc.getLocation().directionTo(pastrLoc),true, rc, directionalLooks, allDirections);
-    		}
-    		//follow breadthFirst path
-    		else if(RobotPlayer.path.size()>1 && RobotPlayer.closeEnough(rc.getLocation(), pastrLoc, 5)){
-    			Direction bdir = BreadthFirst.getNextDirection(RobotPlayer.path, bigBoxSize);
-    			BasicPathing.tryToSneak(bdir, true, rc, directionalLooks, allDirections);
-    		}
-			else if(RobotPlayer.path.size()>1){
-    			Direction bdir = BreadthFirst.getNextDirection(RobotPlayer.path, bigBoxSize);
-    			BasicPathing.tryToMove(bdir, true, rc, directionalLooks, allDirections);
-			}
+    		defendPastrs(rc);
     	}
         else if(rc.readBroadcast(CommunicationProtocol.PASTR_LOCATION_FINISHED_CHANNEL)==1){
     		MapLocation pastrLoc = VectorFunctions.intToLoc(rc.readBroadcast(CommunicationProtocol.PASTR_LOCATION_CHANNEL_MIN));
