@@ -212,16 +212,17 @@ public class Soldier {
     			rc.broadcast(12001, 0);
     		}
     		combat(rc, enemyRobots, alliedRobots, false);
+    		enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent());
     		if(enemyRobots.length==0){
     			rc.broadcast(12001, -100);
     		}
     	}
-    	else if(pastrNumOpp > pastrNum){
-    		attackPastrs(rc,alliedRobots);
-    	}
     	else if(rc.readBroadcast(12000)!=0 && rc.readBroadcast(12001)!=-100){
     		rc.setIndicatorString(1, "Attacking robots");
     		BasicPathing.tryToMove(rc.getLocation().directionTo(VectorFunctions.intToLoc(rc.readBroadcast(12000))), true, rc, directionalLooks, allDirections);
+    	}
+    	else if(pastrNumOpp > pastrNum){
+    		attackPastrs(rc,alliedRobots);
     	}
     	else if (rc.sensePastrLocations(rc.getTeam()).length>0){ //move to defend pastrs
     		rc.setIndicatorString(0, "There are pastrs to defend");
