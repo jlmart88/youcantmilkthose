@@ -23,9 +23,11 @@ public class Soldier {
     private static void moveTowards(RobotController rc, MapLocation enemyLoc) throws GameActionException{
 			//System.out.println("going closer");
 			//    					rc.broadcast(5000,VectorFunctions.locToInt(closestEnemyLoc));
-			Direction towardClosest = rc.getLocation().directionTo(enemyLoc);
-			rc.setIndicatorString(1, "trying to go closer to " + enemyLoc);
-			BasicPathing.tryToMove(towardClosest,true,rc,directionalLooks,allDirections);
+    		if(!RobotPlayer.closeEnough(RobotPlayer.enemyHQLocation, rc.getLocation(), 6)){
+    			Direction towardClosest = rc.getLocation().directionTo(enemyLoc);
+    			rc.setIndicatorString(1, "trying to go closer to " + enemyLoc);
+    			BasicPathing.tryToMove(towardClosest,true,rc,directionalLooks,allDirections);
+    		}
     }
     
     private static void attackPastrs(RobotController rc, Robot[] alliedRobots) throws GameActionException{
@@ -82,7 +84,7 @@ public class Soldier {
 			RobotPlayer.setInitialPath = true;
 		}
 		else if(RobotPlayer.path.size()<=1&&RobotPlayer.setInitialPath){
-			BasicPathing.tryToMove(rc.getLocation().directionTo(pastrLoc),true, rc, directionalLooks, allDirections);
+			BasicPathing.tryToSneak(rc.getLocation().directionTo(pastrLoc),true, rc, directionalLooks, allDirections);
 		}
 		//follow breadthFirst path
 		else if(RobotPlayer.path.size()>1 && RobotPlayer.closeEnough(rc.getLocation(), pastrLoc, 5)){
@@ -141,11 +143,11 @@ public class Soldier {
 							rc.attackSquare(closestEnemyLoc);
 						}
 					}
-					else if(!defend){
+					else{
 						moveTowards(rc,closestEnemyLoc);
 					}
 				}
-				else if(!defend){
+				else{
 					moveTowards(rc,closestEnemyLoc);
 				}
 			}
@@ -217,7 +219,7 @@ public class Soldier {
     			}
     		}
     	}
-    	else if(pastrNumOpp > pastrNum+1 || (pastrNumOpp > 0 && Clock.getRoundNum() > 700 && rc.senseTeamMilkQuantity(rc.getTeam()) < rc.senseTeamMilkQuantity(rc.getTeam().opponent()))){
+    	else if(pastrNumOpp > pastrNum+1 || (pastrNumOpp > pastrNum && pastrNum !=0) || (pastrNumOpp > 0 && Clock.getRoundNum() > 700 && rc.senseTeamMilkQuantity(rc.getTeam()) < rc.senseTeamMilkQuantity(rc.getTeam().opponent()))){
     		attackPastrs(rc,alliedRobots);
     	}
     	else if(rc.readBroadcast(12000)!=0 && rc.readBroadcast(12001)!=-100){
