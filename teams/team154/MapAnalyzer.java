@@ -17,7 +17,7 @@ public class MapAnalyzer {
 	public static final char VOID_TILE = '#';
 	public static final char OFF_MAP_TILE = '^';
 	public static final char ROAD_TILE = '=';
-	public static final int NUM_IDEAL_PASTRS = 3;
+	public static final int NUM_IDEAL_PASTRS = 1;
 	
 	/** Returns NUM_IDEAL_PASTRS number of locations where building a pastr is ideal
 	 * 

@@ -54,8 +54,11 @@ public class Headquarters {
 		if(enemyPastrLocations.length>0){
 			MapLocation closestPastr = VectorFunctions.findClosest(enemyPastrLocations, rc.getLocation());
 			rc.broadcast(20000, VectorFunctions.locToInt(closestPastr));
-			if(RobotPlayer.closeEnough(closestPastr, RobotPlayer.enemyHQLocation, 2)){
+			if(RobotPlayer.closeEnough(closestPastr, RobotPlayer.enemyHQLocation, 3)){
 				rc.broadcast(20005, 1);
+			}
+			else{
+				rc.broadcast(20005, 0);
 			}
 		}
 		
@@ -130,8 +133,8 @@ public class Headquarters {
 
 		//figure out what we need
 
-		if((RobotPlayer.height + RobotPlayer.width <= 100 && Clock.getRoundNum() > 1000 && rc.senseTeamMilkQuantity(rc.getTeam()) < rc.senseTeamMilkQuantity(rc.getTeam().opponent()))
-				|| rc.readBroadcast(20005)==1){// if losing after round 1000 or if closest enemy pastr is in their base
+		if((RobotPlayer.height + RobotPlayer.width < 100 && Clock.getRoundNum() > 800 && rc.sensePastrLocations(rc.getTeam().opponent()).length==0)
+				|| rc.readBroadcast(20005)==1){// if losing after round 800 or if closest enemy pastr is in their base
 			//use building tactic
 			if (rolesCountDict.get(RobotRoles.CONSTRUCTOR)==0){
 				return RobotRoles.CONSTRUCTOR;
@@ -139,7 +142,7 @@ public class Headquarters {
 			else if(rc.sensePastrLocations(rc.getTeam()).length==1 && rolesCountDict.get(RobotRoles.CONSTRUCTOR)==1){
 				return RobotRoles.CONSTRUCTOR;
 			}
-			else if(rc.sensePastrLocations(rc.getTeam().opponent()).length>0){
+			else if(rc.sensePastrLocations(rc.getTeam().opponent()).length>rc.sensePastrLocations(rc.getTeam()).length){
 				return RobotRoles.SOLDIER;
 			}
 			else{
@@ -155,7 +158,7 @@ public class Headquarters {
 		else if(rc.sensePastrLocations(rc.getTeam()).length==1 && rolesCountDict.get(RobotRoles.CONSTRUCTOR)==1){
 			return RobotRoles.CONSTRUCTOR;
 		}
-		else if(rc.sensePastrLocations(rc.getTeam().opponent()).length>0){
+		else if(rc.sensePastrLocations(rc.getTeam().opponent()).length>rc.sensePastrLocations(rc.getTeam()).length && rc.readBroadcast(20005)!=1){
 			return RobotRoles.SOLDIER;
 		}
 		else{

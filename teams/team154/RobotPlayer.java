@@ -73,7 +73,7 @@ public class RobotPlayer{
     
     private static void tryToConstructPastr() throws GameActionException{
     	if (rc.readBroadcast(CommunicationProtocol.PASTR_LOCATION_FINISHED_CHANNEL)==1){
-    		int x = rc.getRobot().getID()%3;
+    		int x = rc.getRobot().getID()%1;
     		MapLocation currentLoc = rc.getLocation();
     		MapLocation pastrLoc = VectorFunctions.intToLoc(rc.readBroadcast(CommunicationProtocol.PASTR_LOCATION_CHANNEL_MIN+x));
     		rc.setIndicatorString(2, "I WILL CONSTRUCT AT " + pastrLoc);
@@ -129,7 +129,6 @@ public class RobotPlayer{
     	MapLocation northLoc = thisLoc.add(0,-MAX_NOISE_DIST);
     	MapLocation NELoc = thisLoc.add(DIAG_NOISE_DIST,-DIAG_NOISE_DIST);
 
-    	rc.attackSquare(thisLoc.add(Direction.EAST));
     	while(!thisLoc.isAdjacentTo(eastLoc)){
     		while(eastLoc.x > width){
     			eastLoc=eastLoc.subtract(Direction.EAST);
@@ -284,7 +283,20 @@ public class RobotPlayer{
         }
         return cows;
     }
-
+    
+    public static MapLocation senseMostCowsAtRange(MapLocation loc) throws GameActionException{
+        double cows = 0;
+        MapLocation[] adjLocs = MapLocation.getAllMapLocationsWithinRadiusSq(loc, 5);
+        MapLocation bestLoc = null;
+        for(MapLocation innerLoc: adjLocs){
+        	if(rc.senseCowsAtLocation(innerLoc) > cows){
+        		cows = rc.senseCowsAtLocation(innerLoc);
+        		bestLoc = innerLoc;
+        	}
+        }
+        rc.setIndicatorString(2, " " + bestLoc);
+        return bestLoc;
+    }
     
 	public static void simpleMove(Direction chosenDirection) throws GameActionException{
 		for(int directionalOffset:directionalLooks){
